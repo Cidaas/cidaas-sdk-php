@@ -8,9 +8,7 @@ class CidaasResourceOwner implements ResourceOwnerInterface
 {
     use ArrayAccessorTrait;
 
-    /**
-     * @var array
-     */
+
     protected $response;
 
     public function __construct(array $response = [])
@@ -18,58 +16,34 @@ class CidaasResourceOwner implements ResourceOwnerInterface
         $this->response = $response;
     }
 
-    /**
-     * @inheritdoc
-     */
     public function getId()
     {
-        return $this->getValueByKey($this->response, 'user_id');
+        return $this->getValueByKey($this->response, 'id');
     }
 
-    /**
-     * Returns email address of the resource owner
-     *
-     * @return string|null
-     */
+    public function getUserId()
+    {
+        return $this->getValueByKey($this->response, 'ssoId');
+    }
+
+    public function getProvider()
+    {
+        return $this->getValueByKey($this->response, 'provider');
+    }
+
     public function getEmail()
     {
         return $this->getValueByKey($this->response, 'email');
     }
 
-    /**
-     * Returns full name of the resource owner
-     *
-     * @return string|null
-     */
     public function getName()
     {
-        return $this->getValueByKey($this->response, 'name');
+        return $this->getValueByKey($this->response, 'displayName');
     }
 
-    /**
-     * Returns nickname of the resource owner
-     *
-     * @return string|null
-     */
-    public function getNickname()
-    {
-        return $this->getValueByKey($this->response, 'nickname');
-    }
-
-    
-    public function getIdentities()
-    {
-        return $this->getValueByKey($this->response, 'identities');
-    }
-
-    /**
-     * Returns picture url of the resource owner
-     *
-     * @return string|null
-     */
     public function getPictureUrl()
     {
-        return $this->getValueByKey($this->response, 'picture');
+        return $this->getValueByKey($this->response, 'photoURL');
     }
 
     /**
