@@ -23,7 +23,16 @@ print_r("\n");
 
 
 $accessToken2 = new AccessToken(["access_token" => $accessToken->getToken()]);
-$resourceOwner = $provider->getResourceOwner($accessToken2);
 
-print_r($resourceOwner);
+$tokenValid = $provider->validateToken($accessToken2->getToken());
+if($tokenValid){
+    print_r("Valid access token");
+}else{
+    print_r("Invalid access token");
+}
+print_r("\n");
+
+
+$userinfo = $provider->getUserInfoById($accessToken2,"youruserid");
+print_r($userinfo);
 print_r("\n");
