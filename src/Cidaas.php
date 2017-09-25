@@ -1,6 +1,7 @@
 <?php
 namespace Cidaas\OAuth2\Client\Provider;
 
+use GuzzleHttp\Client;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Tool\BearerAuthorizationTrait;
@@ -25,6 +26,17 @@ class Cidaas extends AbstractProvider
     public function getBaseAuthorizationUrl()
     {
         return $this->domain() . '/oauth2-login/oauth2/authz';
+    }
+
+    public function getManagerUserInfo()
+    {
+        return $this->domain() . '/oauth2-usermanagement/oauth2/user';
+    }
+
+
+    public function getValidateTokenUrl()
+    {
+        return $this->domain() . '/oauth2-login/oauth2/checktoken';
     }
 
     public function getBaseAccessTokenUrl(array $params = [])
@@ -109,5 +121,36 @@ class Cidaas extends AbstractProvider
     protected function createResourceOwner(array $response, AccessToken $token)
     {
         return new CidaasResourceOwner($response);
+    }
+
+    public function validateToken($access_token){
+        $client = new Client();
+
+        $result = $client->get($this->getValidateTokenUrl(),[
+            "headers"=>[
+                "Content-Type" => "application/json",
+                "access_token"=>$access_token
+            ]
+        ]);
+
+        if($result->getBody()->getContents() == "true"){
+            return true;
+        }
+
+        return false;
+    }
+
+    public function getUserInfoById(AccessToken $token,$user_id){
+        $client = new Client();
+
+        $result = $client->get($this->getManagerUserInfo()."/".$user_id,[
+            "headers"=>[
+                "Content-Type" => "application/json",
+                "access_token"=>$token->getToken()
+            ]
+        ]);
+
+        return $this->createResourceOwner($this->parseResponse($result), $token);
+
     }
 }
