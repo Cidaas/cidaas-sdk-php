@@ -157,8 +157,19 @@ if($userInfo != null){
     $roles = $userInfo->roles;
     $scopes = $userInfo->scopes;
     $userId = $userInfo->userId;
+    if (!in_array("ADMIN", $roles)) {
+        return new Error("Un Autherized access");
+    }
     
+    if (!in_array("products:read", $scopes)) {
+        return new Error("Un Autherized access");
+    }
+  
     print_r("Valid access token");
+    
+    // Your Code here
+    
+    
 }else{
     print_r("Invalid access token");
 }
