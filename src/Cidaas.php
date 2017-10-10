@@ -34,7 +34,7 @@ class Cidaas extends AbstractProvider
         return $this->domain() . '/oauth2-usermanagement/oauth2/user';
     }
 
-    public function getUserInfoUrl()
+    public function getTokenInfoUrl()
     {
         return $this->domain() . '/token/userinfobytoken';
     }
@@ -130,7 +130,7 @@ class Cidaas extends AbstractProvider
     }
 
     public function validateToken($access_token){
-        $client = new Client();
+        $client = $this->getHttpClient();
 
         $result = $client->get($this->getValidateTokenUrl(),[
             "headers"=>[
@@ -147,7 +147,7 @@ class Cidaas extends AbstractProvider
     }
 
     public function getUserInfoById(AccessToken $token,$user_id){
-        $client = new Client();
+        $client = $this->getHttpClient();
 
         $result = $client->get($this->getManagerUserInfoUrl()."/".$user_id,[
             "headers"=>[
@@ -195,7 +195,10 @@ class Cidaas extends AbstractProvider
 
         if($access_token == null)
         {
-            return response()->json(["error"=>"Access denied for this resource"], 401);;
+            return [
+                "error"=>"Access denied for this resource",
+                "status_code"=>401
+            ];
         }
 
 
@@ -272,9 +275,9 @@ class Cidaas extends AbstractProvider
         }
 
 
-        $client = new Client();
+        $client = $this->getHttpClient();
 
-        $result = $client->post($this->getUserInfoUrl(),[
+        $result = $client->post($this->getTokenInfoUrl(),[
             "json"=>$dataToSend,
             "headers"=>[
                 "Content-Type" => "application/json",
@@ -286,11 +289,17 @@ class Cidaas extends AbstractProvider
             $token_check_response = json_decode($result->getBody()->getContents());
 
 
-            return $token_check_response;
+            return [
+                "data"=>$token_check_response,
+                "status_code"=>200
+            ];
 
         }
 
-        return null;
+        return [
+            "error"=>"Access denied for this resource",
+            "status_code"=>401
+        ];
 
     }
 
