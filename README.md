@@ -8,7 +8,7 @@ This package provides Cidaas OAuth 2.0 support for the PHP League's [OAuth 2.0 C
 To install, use composer:
 
 ```
-composer require "cidaas/oauth2-cidaas @dev"
+composer require "cidaas/oauth2-cidaas:dev-master"
 ```
 
 ## Usage
