@@ -148,7 +148,27 @@ print_r("\n");
 ```
 
 
-### Validate the Token 
+### Validate the Scope, Role and Get User base info
+
+
+```php
+$userInfo = $provider->getUserInfo($request);
+if($userInfo != null){
+    $roles = $userInfo->roles;
+    $scopes = $userInfo->scopes;
+    $userId = $userInfo->userId;
+    
+    print_r("Valid access token");
+}else{
+    print_r("Invalid access token");
+}
+print_r("\n");
+```
+
+
+
+
+### Validate Expire time of the Token 
 
 
 ```php
@@ -160,4 +180,7 @@ if($tokenValid){
 }
 print_r("\n");
 ```
+
+
+
 
