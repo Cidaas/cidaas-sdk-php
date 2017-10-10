@@ -152,8 +152,9 @@ print_r("\n");
 
 
 ```php
-$userInfo = $provider->getUserInfo($request);
-if($userInfo != null){
+$response = $provider->getUserInfo($request);
+if($response->status_code == 200){
+    $userInfo = $response->data;
     $roles = $userInfo->roles;
     $scopes = $userInfo->scopes;
     $userId = $userInfo->userId;
