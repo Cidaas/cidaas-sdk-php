@@ -146,3 +146,18 @@ $resourceOwner = $provider->getResourceOwner($accessToken2);
 print_r($resourceOwner);
 print_r("\n");
 ```
+
+
+### Validate the Token 
+
+
+```php
+$tokenValid = $provider->validateToken($accessToken->getToken());
+if($tokenValid){
+    print_r("Valid access token");
+}else{
+    print_r("Invalid access token");
+}
+print_r("\n");
+```
+
