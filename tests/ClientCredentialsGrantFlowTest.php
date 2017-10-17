@@ -33,6 +33,6 @@ if($tokenValid){
 print_r("\n");
 
 
-$userinfo = $provider->getUserInfoById($accessToken2,"youruserid");
+$userinfo = $provider->getUserInfoById($accessToken2,"userid");
 print_r($userinfo);
 print_r("\n");
