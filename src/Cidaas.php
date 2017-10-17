@@ -160,7 +160,7 @@ class Cidaas extends AbstractProvider
 
     public  function  validateAccessByToken($pasedInfo=[],$roles=[],$scopes=[]){
         $access_token_key = "access_token";
-        if($pasedInfo[$access_token_key] == null){
+        if(!isset($pasedInfo[$access_token_key])){
             return [
                 "error"=>"Access denied for this resource",
                 "status_code"=>401,
@@ -168,22 +168,69 @@ class Cidaas extends AbstractProvider
             ];
         }
 
+        if(!isset($pasedInfo["headers"])){
+            return [
+                "error"=>"Access denied for this resource",
+                "status_code"=>401,
+                "message" => "Headers cannot be null"
+            ];
+        }
+
+        $headers = $pasedInfo["headers"];
+
+
+        $ipAddress = "";
+
+        if(isset($headers["x-forwarded-for"])){
+            $ips = explode(" ",$headers["x-forwarded-for"]);
+            if(sizeof($ips)>0){
+                $ipAddress = $ips[0];
+            }
+
+        }
+
+
+        $host = "";
+        if(isset($headers["X-Forwarded-Host"])){
+            $host = $headers["X-Forwarded-Host"];
+        }
+
+        $acceptLanguage = "";
+
+        if(isset($headers["Accept-Language"])){
+            $acceptLanguage = $headers["Accept-Language"];
+        }
+
+        $userAgent = "";
+
+        if(isset($headers["user-agent"])){
+            $userAgent = $headers["user-agent"];
+        }
+
+        $referrer = "";
+
+        if(isset($headers["referrer"])){
+            $referrer = $headers["referrer"];
+        }
+
+
         $dataToSend = [
             "accessToken"=>$pasedInfo[$access_token_key],
             "userId"=>null,
             "clientId"=>null,
-            "referrer"=>$pasedInfo["referrer"],
-            "ipAddress"=>$pasedInfo["ipAddress"],
-            "host"=>$pasedInfo["host"],
-            "acceptLanguage"=>$pasedInfo["acceptLanguage"],
-            "userAgent"=>$pasedInfo["userAgent"],
-            "requestURL"=>$pasedInfo["requestURL"],
+            "referrer"=>$referrer,
+            "ipAddress"=>$ipAddress,
+            "host"=>$host,
+            "acceptLanguage"=>$acceptLanguage,
+            "userAgent"=>$userAgent,
+            "requestURL"=>isset($pasedInfo["requestURL"])?$pasedInfo["requestURL"]:"",
             "success"=>false,
             "requestedScopes"=>"",
             "requestedRoles"=>"",
             "createdTime"=>date_create('now')->format('Y-m-d\TH:i:sO'),
-            "requestInfo"=>$pasedInfo
+            "requestInfo"=>$headers
         ];
+
 
 
         if($roles!=null){
@@ -193,6 +240,7 @@ class Cidaas extends AbstractProvider
         if($scopes!=null){
             $dataToSend["requestedScopes"] =  implode(" ",$scopes);
         }
+
 
         $client = $this->getHttpClient();
 
@@ -219,148 +267,5 @@ class Cidaas extends AbstractProvider
             "status_code"=>401
         ];
     }
-//
-//    public function getUserInfo(Request $request){
-//
-//        $access_token_key = "access_token";
-//
-//        $access_token = null;
-//
-//        if( $request->headers->has($access_token_key)) {
-//            $access_token = $request->headers->get($access_token_key);
-//        }
-//
-//        if($access_token==null && $request->query($access_token_key) != null){
-//            $access_token = $request->query($access_token_key);
-//        }
-//
-//        if($access_token==null && $request->headers->has("authorization")){
-//            $auth = $request->headers->get("authorization");
-//
-//            if(strtolower(substr($auth, 0, strlen("bearer"))) === "bearer"){
-//                $authvals = explode(" ",$auth);
-//
-//                if(sizeof($authvals)>1){
-//                    $access_token = $authvals[1];
-//                }
-//            }
-//        }
-//
-//        $cookieRequest = false;
-//        if($access_token==null && $request->cookies->get("access_token")){
-//            $access_token = $request->cookies->get("access_token");
-//            $cookieRequest = true;
-//        }
-//
-//
-//        if($access_token == null)
-//        {
-//            return [
-//                "error"=>"Access denied for this resource",
-//                "status_code"=>401
-//            ];
-//        }
-//
-//
-//
-//        $ipAddress = "";
-//
-//        if($request->headers->has("x-forwarded-for")){
-//            $ips = explode(" ",$request->headers->get("x-forwarded-for"));
-//            $ipAddress = explode(",",$auth)[0];
-//        }
-//
-//
-//        $host = "";
-//
-//        if($request->headers->has("X-Forwarded-Host")){
-//            $host = $request->headers->get("X-Forwarded-Host");
-//        }
-//
-//        $acceptLanguage = "";
-//
-//        if($request->headers->has("Accept-Language")){
-//            $acceptLanguage = $request->headers->get("Accept-Language");
-//        }
-//
-//        $userAgent = "";
-//
-//        if($request->headers->has("user-agent")){
-//            $userAgent = $request->headers->get("user-agent");
-//        }
-//
-//        $referrer = "";
-//
-//        if($request->headers->has("referrer")){
-//            $referrer = $request->headers->get("referrer");
-//        }
-//
-//        $allHeaders = [];
-//        foreach ($request->headers as $key=>$value){
-//            $allHeaders[$key] = $value[0];
-//        }
-//
-//
-//
-//        $dataToSend = [
-//            "accessToken"=>$access_token,
-//            "userId"=>null,
-//            "clientId"=>null,
-//            "referrer"=>$referrer,
-//            "ipAddress"=>$ipAddress,
-//            "host"=>$host,
-//            "acceptLanguage"=>$acceptLanguage,
-//            "userAgent"=>$userAgent,
-//            "requestURL"=>$request->getRequestUri(),
-//            "success"=>false,
-//            "requestedScopes"=>"",
-//            "requestedRoles"=>"",
-//            "createdTime"=>date_create('now')->format('Y-m-d\TH:i:sO'),
-//            "requestInfo"=>$allHeaders
-//        ];
-//
-//
-//
-//
-//        $roles = $request->route()->getAction("roles");
-//
-//        if($roles!=null){
-//            $dataToSend["requestedRoles"] =  implode(",",$roles);
-//        }
-//
-//        $scopes = $request->route()->getAction("scopes");
-//
-//        if($scopes!=null){
-//            $dataToSend["requestedScopes"] =  implode(" ",$scopes);
-//        }
-//
-//
-//        $client = $this->getHttpClient();
-//
-//        $result = $client->post($this->getTokenInfoUrl(),[
-//            "json"=>$dataToSend,
-//            "headers"=>[
-//                "Content-Type" => "application/json",
-//                "access_token"=>$access_token
-//            ]
-//        ]);
-//
-//        if($result->getStatusCode() == 200) {
-//            $token_check_response = json_decode($result->getBody()->getContents());
-//
-//
-//            return [
-//                "data"=>$token_check_response,
-//                "status_code"=>200
-//            ];
-//
-//        }
-//
-//        return [
-//            "error"=>"Access denied for this resource",
-//            "status_code"=>401
-//        ];
-//
-//    }
 
 }
