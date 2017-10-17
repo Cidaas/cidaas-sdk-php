@@ -127,22 +127,7 @@ class Cidaas extends AbstractProvider
         return new CidaasResourceOwner($response);
     }
 
-    public function validateToken($access_token){
-        $client = $this->getHttpClient();
 
-        $result = $client->get($this->getValidateTokenUrl(),[
-            "headers"=>[
-                "Content-Type" => "application/json",
-                "access_token"=>$access_token
-            ]
-        ]);
-
-        if($result->getBody()->getContents() == "true"){
-            return true;
-        }
-
-        return false;
-    }
 
     public function getUserInfoById(AccessToken $token,$user_id){
         $client = $this->getHttpClient();
@@ -158,7 +143,24 @@ class Cidaas extends AbstractProvider
 
     }
 
-    public  function  validateAccessByToken($pasedInfo=[],$roles=[],$scopes=[]){
+    public function isTokenExpired($access_token){
+        $client = $this->getHttpClient();
+
+        $result = $client->get($this->getValidateTokenUrl(),[
+            "headers"=>[
+                "Content-Type" => "application/json",
+                "access_token"=>$access_token
+            ]
+        ]);
+
+        if($result->getBody()->getContents() == "true"){
+            return false;
+        }
+
+        return true;
+    }
+
+    public  function  validateToken($pasedInfo=[],$roles=[],$scopes=[]){
         $access_token_key = "access_token";
         if(!isset($pasedInfo[$access_token_key])){
             return [
