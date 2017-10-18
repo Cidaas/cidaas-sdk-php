@@ -148,24 +148,78 @@ print_r("\n");
 ```
 
 
-### Validate the Scope, Role and Get User base info
-
+#### Parse request and get the details 
 
 ```php
-$response = $provider->getUserInfo($request);
+public function extractHeaderInfo(Request $request)
+    {
+
+        $responseData = [
+            "requestURL" => $request->getRequestUri()
+        ];
+        $access_token_key = "access_token";
+
+        $access_token = null;
+
+        if ($request->headers->has($access_token_key)) {
+            $access_token = $request->headers->get($access_token_key);
+        }
+
+        if ($access_token == null && $request->query($access_token_key) != null) {
+            $access_token = $request->query($access_token_key);
+        }
+
+        if ($access_token == null && $request->headers->has("authorization")) {
+            $auth = $request->headers->get("authorization");
+
+            if (strtolower(substr($auth, 0, strlen("bearer"))) === "bearer") {
+                $authvals = explode(" ", $auth);
+
+                if (sizeof($authvals) > 1) {
+                    $access_token = $authvals[1];
+                }
+            }
+        }
+
+        if ($access_token == null && $request->cookies->get("access_token")) {
+            $access_token = $request->cookies->get("access_token");
+
+        }
+
+        $responseData["access_token"]  = $access_token;
+
+
+        $responseData["headers"] = [];
+        foreach ($request->headers as $key => $value) {
+
+            $responseData["headers"][$key] = $value[0];
+        }
+
+        return $responseData;
+    }
+```
+
+#### Use SDK function
+
+```php
+
+$parsedData = $this->extractHeaderInfo($request);
+
+$provider = new Cidaas([
+    'baseUrl'                 => 'yourcidaasbaseurl',
+    'clientId'                => 'xxxx',    // The client ID assigned to you by the provider
+    'clientSecret'            => 'yyyy',   // The client password assigned to you by the provider
+    'redirectUri'             => 'https://yourdomain/user-ui/html/welcome.html'
+]);
+
+$response = $provider->validateAccessByToken($ff,["ADMIN","MANAGER"],["products:read","products:write"]);
+
 if($response->status_code == 200){
     $userInfo = $response->data;
     $roles = $userInfo->roles;
     $scopes = $userInfo->scopes;
     $userId = $userInfo->userId;
-    if (!in_array("ADMIN", $roles)) {
-        return new Error("Un Autherized access");
-    }
     
-    if (!in_array("products:read", $scopes)) {
-        return new Error("Un Autherized access");
-    }
-  
     print_r("Valid access token");
     
     // Your Code here
@@ -180,15 +234,15 @@ print_r("\n");
 
 
 
-### Validate Expire time of the Token 
+### Validate if the Token Expired or not 
 
 
 ```php
-$tokenValid = $provider->validateToken($accessToken->getToken());
-if($tokenValid){
-    print_r("Valid access token");
-}else{
+$isExpired = $provider->isTokenExpired($accessToken->getToken());
+if($isExpired){
     print_r("Invalid access token");
+}else{
+    print_r("Valid access token");
 }
 print_r("\n");
 ```
