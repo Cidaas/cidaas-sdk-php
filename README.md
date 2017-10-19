@@ -147,6 +147,7 @@ print_r($resourceOwner);
 print_r("\n");
 ```
 
+## Validate Access , Roles, Scopes. 
 
 #### Parse request and get the details 
 
