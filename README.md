@@ -150,6 +150,9 @@ print_r("\n");
 
 #### Parse request and get the details 
 
+Add this in your web framework side.
+
+
 ```php
 public function extractHeaderInfo(Request $request)
     {
