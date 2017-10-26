@@ -151,6 +151,43 @@ print_r("\n");
 
 #### Parse request and get the details 
 
+
+To validate the Access by the Token, we need to pass the following information to the `validateAccessByToken` 
+
+```
+$provider->validateAccessByToken($requestData,$rolesArray,$scopesArray)
+```
+
+##### 1. RequestData (Used for Authentication)
+
+The request data is sending the page/api request meta data to SDK. 
+
+```php
+$requestData = [
+    "access_token"=>"access_token_from_request",
+    "requestURL"=>"Target URL from the request",
+    "headers"=>"headers from the request",
+];
+
+```
+
+##### 2. RolesArray (Used for Authorization)
+
+To Authorize the access for the token, ie, some page is allowed to view by certain users with certain roles. in that case we just need to pass that required roles in this. 
+
+For example :  page /employees allowed to view only by user who having the Role "HR"
+
+##### 2. ScopesArray (Used for Authorization)
+
+To Authorize the access for the token, ie, some page is allowed to view by certain scopes. in that case we just need to pass that required scopes in this. 
+
+For example :  page /leavelist allowed to view only by access token that conatains scope leave:read
+
+
+   
+
+#### Example snippet for Laravel Framwork
+
 Add this in your web framework side.
 
 
