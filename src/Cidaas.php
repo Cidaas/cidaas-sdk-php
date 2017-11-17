@@ -170,7 +170,30 @@ class Cidaas extends AbstractProvider
     public  function  validateToken($pasedInfo=[],$roles=[],$scopes=[]){
         $access_token_key = "access_token";
 
+        if(!isset($pasedInfo[$access_token_key])){
+            return [
+                "error"=>"Access denied for this resource",
+                "status_code"=>401,
+                "message" => "Access token cannot be null"
+            ];
+        }
+
+        if(!isset($pasedInfo["headers"])){
+            return [
+                "error"=>"Access denied for this resource",
+                "status_code"=>401,
+                "message" => "Headers cannot be null"
+            ];
+        }
+
         $dataToSend = prepareTokenUsageEntity($pasedInfo,$roles,$scopes);
+        if($dataToSend == null){
+            return [
+                "error"=>"Access denied for this resource",
+                "status_code"=>401
+            ];
+        }
+
         $client = $this->getHttpClient();
 
         $result = $client->post($this->getTokenInfoUrl(),[
@@ -200,19 +223,11 @@ class Cidaas extends AbstractProvider
     public  function  prepareTokenUsageEntity($pasedInfo=[],$roles=[],$scopes=[]){
         $access_token_key = "access_token";
         if(!isset($pasedInfo[$access_token_key])){
-            return [
-                "error"=>"Access denied for this resource",
-                "status_code"=>401,
-                "message" => "Access token cannot be null"
-            ];
+            return null;
         }
 
         if(!isset($pasedInfo["headers"])){
-            return [
-                "error"=>"Access denied for this resource",
-                "status_code"=>401,
-                "message" => "Headers cannot be null"
-            ];
+            return null;
         }
 
         $headers = $pasedInfo["headers"];
@@ -284,12 +299,12 @@ class Cidaas extends AbstractProvider
 
     }
 
-    public  function  updateTokenUsage($tokenList=[]){
+    public  function  updateTokenUsage($preparedTokenList=[]){
 
         $client = $this->getHttpClient();
 
         $result = $client->post($this->getUpdateTokenUsageUrl(),[
-            "json"=>$tokenList,
+            "json"=>$preparedTokenList,
             "headers"=>[
                 "Content-Type" => "application/json"
             ]
