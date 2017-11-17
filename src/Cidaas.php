@@ -270,4 +270,29 @@ class Cidaas extends AbstractProvider
         ];
     }
 
+    public  function  updateTokenUsage($tokenList=[]){
+
+        $client = $this->getHttpClient();
+
+        $result = $client->post($this->getTokenInfoUrl(),[
+            "json"=>$tokenList,
+            "headers"=>[
+                "Content-Type" => "application/json"
+            ]
+        ]);
+
+        if($result->getStatusCode() == 200) {
+
+            return [
+                "status_code"=>200
+            ];
+
+        }
+
+        return [
+            "error"=>"Access denied for this resource",
+            "status_code"=>401
+        ];
+    }
+
 }
