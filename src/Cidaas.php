@@ -53,6 +53,13 @@ class Cidaas extends AbstractProvider
         return $this->domain() . '/oauth2-usermanagement/oauth2/userinfo';
     }
 
+
+    public function getUpdateTokenUsageUrl()
+    {
+        return $this->domain() . '/token/updateusage';
+    }
+
+
     public function getDefaultScopes()
     {
         return ['openid','profile', 'email'];
@@ -274,7 +281,7 @@ class Cidaas extends AbstractProvider
 
         $client = $this->getHttpClient();
 
-        $result = $client->post($this->getTokenInfoUrl(),[
+        $result = $client->post($this->getUpdateTokenUsageUrl(),[
             "json"=>$tokenList,
             "headers"=>[
                 "Content-Type" => "application/json"
