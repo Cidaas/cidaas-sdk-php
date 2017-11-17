@@ -169,6 +169,36 @@ class Cidaas extends AbstractProvider
 
     public  function  validateToken($pasedInfo=[],$roles=[],$scopes=[]){
         $access_token_key = "access_token";
+
+        $dataToSend = prepareTokenUsageEntity($pasedInfo,$roles,$scopes);
+        $client = $this->getHttpClient();
+
+        $result = $client->post($this->getTokenInfoUrl(),[
+            "json"=>$dataToSend,
+            "headers"=>[
+                "Content-Type" => "application/json",
+                "access_token"=>$pasedInfo[$access_token_key]
+            ]
+        ]);
+
+        if($result->getStatusCode() == 200) {
+            $token_check_response = json_decode($result->getBody()->getContents());
+
+            return [
+                "data"=>$token_check_response,
+                "status_code"=>200
+            ];
+
+        }
+
+        return [
+            "error"=>"Access denied for this resource",
+            "status_code"=>401
+        ];
+    }
+
+    public  function  prepareTokenUsageEntity($pasedInfo=[],$roles=[],$scopes=[]){
+        $access_token_key = "access_token";
         if(!isset($pasedInfo[$access_token_key])){
             return [
                 "error"=>"Access denied for this resource",
@@ -250,31 +280,8 @@ class Cidaas extends AbstractProvider
             $dataToSend["requestedScopes"] =  implode(" ",$scopes);
         }
 
+        return $dataToSend;
 
-        $client = $this->getHttpClient();
-
-        $result = $client->post($this->getTokenInfoUrl(),[
-            "json"=>$dataToSend,
-            "headers"=>[
-                "Content-Type" => "application/json",
-                "access_token"=>$pasedInfo[$access_token_key]
-            ]
-        ]);
-
-        if($result->getStatusCode() == 200) {
-            $token_check_response = json_decode($result->getBody()->getContents());
-
-            return [
-                "data"=>$token_check_response,
-                "status_code"=>200
-            ];
-
-        }
-
-        return [
-            "error"=>"Access denied for this resource",
-            "status_code"=>401
-        ];
     }
 
     public  function  updateTokenUsage($tokenList=[]){
