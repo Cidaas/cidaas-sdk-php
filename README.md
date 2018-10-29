@@ -1,19 +1,15 @@
 # Cidaas Provider for OAuth 2.0 Client
 
 
-This package provides Cidaas OAuth 2.0 support for the PHP League's [OAuth 2.0 Client](https://github.com/thephpleague/oauth2-client).
-
 ## Installation
 
 To install, use composer:
 
 ```
-composer require "cidaas/oauth2-cidaas:dev-master"
+composer require "cidaas/oauth2-cidaas:dev-cidaas-v2"
 ```
 
 ## Usage
-
-Usage is the same as The League's OAuth client, using `Cidaas\OAuth2\Client\Provider\Cidaas` as the provider.
 
 
 ### Implicit Flow
@@ -25,31 +21,35 @@ Usage is the same as The League's OAuth client, using `Cidaas\OAuth2\Client\Prov
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Cidaas\OAuth2\Client\Provider\Cidaas;
-use \League\OAuth2\Client\Token\AccessToken;
-
-
 
 $provider = new Cidaas([
-    'baseUrl'                 => 'yourcidaasbaseurl',
-    'clientId'                => 'xxxx',    // The client ID assigned to you by the provider
-    'clientSecret'            => 'yyyy',   // The client password assigned to you by the provider
-    'redirectUri'             => 'https://yourredirecturl'
+    'base_url' => 'https://cidaas-base-url.cidaas.de',
+    'client_id' => '55afd65d-ce02-45d1-93d8-b77b2bd286d2', // The client ID assigned to you by the provider
+    'client_secret' => '7ea886b9-2711-447c-baba-c5572ad7e1ac', // The client password assigned to you by the provider
+    'redirect_uri' => 'http://localhost:8080',
 ]);
 
+$authz_url = $provider->getAuthorizationUrl(
+    [
+        "scope" => "openid email profile",
+        "response_type" => 'token',
+    ]
+);
 
-print_r($provider->getAuthorizationUrl(["response_type"=>'token']));
+echo $authz_url;
 print_r("\n");
 
-
-echo "Copy Paste the above URL in the browser and login and Enter the Access Token : ";
-$handle = fopen ("php://stdin","r");
+echo "Copy Paste the above URL in the browser and login and Enter the Code : ";
+$handle = fopen("php://stdin", "r");
 $line = fgets($handle);
 
+$resourceOwner = $provider->getUserInfo(trim($line));
 
-$accessToken2 = new AccessToken(["access_token" => trim($line)]);
-$resourceOwner = $provider->getResourceOwner($accessToken2);
+print_r("\n");
+echo "User info";
+print_r("\n");
+echo json_encode($resourceOwner);
 
-print_r($resourceOwner);
 
 ```
 
@@ -65,37 +65,56 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use Cidaas\OAuth2\Client\Provider\Cidaas;
 
-
-
-
 $provider = new Cidaas([
-    'baseUrl'                 => 'yourcidaasbaseurl',
-    'clientId'                => 'xxxx',    // The client ID assigned to you by the provider
-    'clientSecret'            => 'yyyy',   // The client password assigned to you by the provider
-    'redirectUri'             => 'https://yourredirecturl'
+    'base_url' => 'https://cidaas-base-url.cidaas.de',
+    'client_id' => '55afd65d-ce02-45d1-93d8-b77b2bd286d2', // The client ID assigned to you by the provider
+    'client_secret' => '7ea886b9-2711-447c-baba-c5572ad7e1ac', // The client password assigned to you by the provider
+    'redirect_uri' => 'http://localhost:8080',
 ]);
 
+$authz_url = $provider->getAuthorizationUrl(
+    [
+        "scope" => "openid email profile offline_access",
+    ]
+);
 
-print_r($provider->getAuthorizationUrl(["response_type"=>'code']));
+echo $authz_url;
 print_r("\n");
 
 echo "Copy Paste the above URL in the browser and login and Enter the Code : ";
-$handle = fopen ("php://stdin","r");
+$handle = fopen("php://stdin", "r");
 $line = fgets($handle);
 
-$accessToken = $provider->getAccessToken('authorization_code', [
-    'code' => trim($line)
+$access_token = $provider->getAccessToken('authorization_code', [
+    'code' => trim($line),
 ]);
 
-print_r($accessToken->getToken());
+echo "Access Token";
 print_r("\n");
-print_r($accessToken->getRefreshToken());
+echo $access_token["access_token"];
+
+print_r("\n");
+echo "Refresh Token";
+print_r("\n");
+echo $access_token["refresh_token"];
+
+$resourceOwner = $provider->getUserInfo($access_token["access_token"]);
+
+print_r("\n");
+echo "User info";
+print_r("\n");
+echo json_encode($resourceOwner);
+
+$refresh_token = $provider->getAccessToken('refresh_token', [
+    'refresh_token' => trim($access_token["refresh_token"]),
+]);
+
+print_r("\n");
+echo "Token From Access Token";
+print_r("\n");
+echo $refresh_token["access_token"];
 print_r("\n");
 
-$resourceOwner = $provider->getResourceOwner($accessToken);
-
-print_r($resourceOwner);
-print_r("\n");
 
 
 ```
@@ -104,11 +123,14 @@ print_r("\n");
 
 ```php
 
-$refrehToken = $provider->getAccessToken('refresh_token', [
-    'refresh_token' => trim($accessToken->getRefreshToken())
+$refresh_token = $provider->getAccessToken('refresh_token', [
+    'refresh_token' => trim($access_token["refresh_token"]),
 ]);
 
-print_r($refrehToken->getToken());
+print_r("\n");
+echo "Token From Access Token";
+print_r("\n");
+echo $refresh_token["access_token"];
 print_r("\n");
 
 ```
@@ -116,178 +138,91 @@ print_r("\n");
 ### Client Credentials Flow
 
 ```php
+
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Cidaas\OAuth2\Client\Provider\Cidaas;
-use \League\OAuth2\Client\Token\AccessToken;
-
-
-
 
 $provider = new Cidaas([
-    'baseUrl'                 => 'yourcidaasbaseurl',
-    'clientId'                => 'xxxx',    // The client ID assigned to you by the provider
-    'clientSecret'            => 'yyyy',   // The client password assigned to you by the provider
+    'base_url' => 'https://cidaas-base-url.cidaas.de',
+    'client_id' => '3e4ad34e-97c5-410d-82c9-1d9a71820a87', // The client ID assigned to you by the provider
+    'client_secret' => 'cf914b42-6a0e-48a1-aea6-935bfa749027', // The client password assigned to you by the provider
 ]);
 
+$access_token = $provider->getAccessToken('client_credentials', [
 
+]);
 
-$accessToken = $provider->getAccessToken('client_credentials');
-
-print_r($accessToken->getToken());
+echo "Access Token";
 print_r("\n");
+echo $access_token["access_token"];
 
+$resourceOwner = $provider->getUserInfo($access_token["access_token"], "c568bec6-15ff-4278-a165-415fab9a622a");
 
-$accessToken2 = new AccessToken(["access_token" => $accessToken->getToken()]);
-$resourceOwner = $provider->getResourceOwner($accessToken2);
-
-print_r($resourceOwner);
 print_r("\n");
+echo "User info";
+print_r("\n");
+echo json_encode($resourceOwner);
+
 ```
 
 ## Validate Access , Roles, Scopes. 
 
-#### Parse request and get the details 
-
-
-To validate the Access by the Token, we need to pass the following information to the `validateAccessByToken` 
-
-```
-$provider->validateAccessByToken($requestData,$rolesArray,$scopesArray)
-```
-
-##### 1. RequestData (Used for Authentication)
-
-The request data is sending the page/api request meta data to SDK. 
-
-```php
-$requestData = [
-    "access_token"=>"access_token_from_request",
-    "requestURL"=>"Target URL from the request",
-    "headers"=>"headers from the request",
-];
-
-```
-
-##### 2. RolesArray (Used for Authorization)
-
-To Authorize the access for the token, ie, some page is allowed to view by certain users with certain roles. in that case we just need to pass that required roles in this. 
-
-For example :  page /employees allowed to view only by user who having the Role "HR"
-
-##### 2. ScopesArray (Used for Authorization)
-
-To Authorize the access for the token, ie, some page is allowed to view by certain scopes. in that case we just need to pass that required scopes in this. 
-
-For example :  page /leavelist allowed to view only by access token that conatains scope leave:read
-
-
-   
-
-#### Example snippet for Laravel Framwork
-
-Add this in your web framework side.
-
-
-```php
-public function extractHeaderInfo(Request $request)
-    {
-
-        $responseData = [
-            "requestURL" => $request->getRequestUri()
-        ];
-        $access_token_key = "access_token";
-
-        $access_token = null;
-
-        if ($request->headers->has($access_token_key)) {
-            $access_token = $request->headers->get($access_token_key);
-        }
-
-        if ($access_token == null && $request->query($access_token_key) != null) {
-            $access_token = $request->query($access_token_key);
-        }
-
-        if ($access_token == null && $request->headers->has("authorization")) {
-            $auth = $request->headers->get("authorization");
-
-            if (strtolower(substr($auth, 0, strlen("bearer"))) === "bearer") {
-                $authvals = explode(" ", $auth);
-
-                if (sizeof($authvals) > 1) {
-                    $access_token = $authvals[1];
-                }
-            }
-        }
-
-        if ($access_token == null && $request->cookies->get("access_token")) {
-            $access_token = $request->cookies->get("access_token");
-
-        }
-
-        $responseData["access_token"]  = $access_token;
-
-
-        $responseData["headers"] = [];
-        foreach ($request->headers as $key => $value) {
-
-            $responseData["headers"][$key] = $value[0];
-        }
-
-        return $responseData;
-    }
-```
-
-#### Use SDK function
-
 ```php
 
-$parsedData = $this->extractHeaderInfo($request);
+<?php
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use Cidaas\OAuth2\Client\Provider\Cidaas;
 
 $provider = new Cidaas([
-    'baseUrl'                 => 'yourcidaasbaseurl',
-    'clientId'                => 'xxxx',    // The client ID assigned to you by the provider
-    'clientSecret'            => 'yyyy',   // The client password assigned to you by the provider
-    'redirectUri'             => 'https://yourdomain/user-ui/html/welcome.html'
+    'base_url' => 'https://cidaas-base-url.cidaas.de',
+    'client_id' => '3e4ad34e-97c5-410d-82c9-1d9a71820a87', // The client ID assigned to you by the provider
+    'client_secret' => 'cf914b42-6a0e-48a1-aea6-935bfa749027', // The client password assigned to you by the provider
 ]);
 
-$response = $provider->validateToken($parsedData,["ADMIN","MANAGER"],["products:read","products:write"]);
+echo "Validate with Bearer";
+$tokenInfo = $provider->introspectToken([
+    "token" => "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM1ZTIzZmViLTQyODQtNDMyZi1hZWIzLWRlMzJhNWFjMTZkNiJ9.eyJzaWQiOiIxMzczMmJkOC0wMWFlLTQyNmQtODY3MC01YTcwMzU1OTBlMmQiLCJzdWIiOiJBTk9OWU1PVVMiLCJhdWQiOiIzZTRhZDM0ZS05N2M1LTQxMGQtODJjOS0xZDlhNzE4MjBhODciLCJpYXQiOjE1NDA4MzIxNjQsImF1dGhfdGltZSI6MTU0MDgzMjE2NCwiaXNzIjoiaHR0cHM6Ly9uaWdodGx5YnVpbGQuY2lkYWFzLmRlIiwianRpIjoiNzA0MjI0ZTQtN2EwMy00YWZlLTgwYmUtYTVhNTE5ZWM0NzljIiwic2NvcGVzIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmVfYWNjZXNzIiwicGhvbmUiXSwiZXhwIjoxNTQwOTE4NTY0fQ.Gam9PYjXJSQDEQ-tUZnMbjoaaIFX-i67wF1wZa6eJhixRZB-8pRxesQs6dHtOpv2dTKjbIMEzVuJvYF7mdi78C2Qu1ZtxWARGu54MLctpLY5Jzuuup55pzK7jD50mrNIBPK1yMygv1bkzxejTo_SiDzbkN8QTe2gloAce3Icf6M",
+], "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM1ZTIzZmViLTQyODQtNDMyZi1hZWIzLWRlMzJhNWFjMTZkNiJ9.eyJzaWQiOiIxMzczMmJkOC0wMWFlLTQyNmQtODY3MC01YTcwMzU1OTBlMmQiLCJzdWIiOiJBTk9OWU1PVVMiLCJhdWQiOiIzZTRhZDM0ZS05N2M1LTQxMGQtODJjOS0xZDlhNzE4MjBhODciLCJpYXQiOjE1NDA4MzIxNjQsImF1dGhfdGltZSI6MTU0MDgzMjE2NCwiaXNzIjoiaHR0cHM6Ly9uaWdodGx5YnVpbGQuY2lkYWFzLmRlIiwianRpIjoiNzA0MjI0ZTQtN2EwMy00YWZlLTgwYmUtYTVhNTE5ZWM0NzljIiwic2NvcGVzIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmVfYWNjZXNzIiwicGhvbmUiXSwiZXhwIjoxNTQwOTE4NTY0fQ.Gam9PYjXJSQDEQ-tUZnMbjoaaIFX-i67wF1wZa6eJhixRZB-8pRxesQs6dHtOpv2dTKjbIMEzVuJvYF7mdi78C2Qu1ZtxWARGu54MLctpLY5Jzuuup55pzK7jD50mrNIBPK1yMygv1bkzxejTo_SiDzbkN8QTe2gloAce3Icf6M");
 
-if($response->status_code == 200){
-    $userInfo = $response->data;
-    $roles = $userInfo->roles;
-    $scopes = $userInfo->scopes;
-    $userId = $userInfo->userId;
-    
-    print_r("Valid access token");
-    
-    // Your Code here
-    
-    
-}else{
-    print_r("Invalid access token");
-}
-print_r("\n");
+echo json_encode($tokenInfo);
+
+echo "Validate with Basic";
+$tokenInfo = $provider->introspectToken([
+    "token" => "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM1ZTIzZmViLTQyODQtNDMyZi1hZWIzLWRlMzJhNWFjMTZkNiJ9.eyJzaWQiOiIxMzczMmJkOC0wMWFlLTQyNmQtODY3MC01YTcwMzU1OTBlMmQiLCJzdWIiOiJBTk9OWU1PVVMiLCJhdWQiOiIzZTRhZDM0ZS05N2M1LTQxMGQtODJjOS0xZDlhNzE4MjBhODciLCJpYXQiOjE1NDA4MzIxNjQsImF1dGhfdGltZSI6MTU0MDgzMjE2NCwiaXNzIjoiaHR0cHM6Ly9uaWdodGx5YnVpbGQuY2lkYWFzLmRlIiwianRpIjoiNzA0MjI0ZTQtN2EwMy00YWZlLTgwYmUtYTVhNTE5ZWM0NzljIiwic2NvcGVzIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmVfYWNjZXNzIiwicGhvbmUiXSwiZXhwIjoxNTQwOTE4NTY0fQ.Gam9PYjXJSQDEQ-tUZnMbjoaaIFX-i67wF1wZa6eJhixRZB-8pRxesQs6dHtOpv2dTKjbIMEzVuJvYF7mdi78C2Qu1ZtxWARGu54MLctpLY5Jzuuup55pzK7jD50mrNIBPK1yMygv1bkzxejTo_SiDzbkN8QTe2gloAce3Icf6M",
+]);
+
+echo json_encode($tokenInfo);
+
+echo "Validate with scopes";
+$tokenInfo = $provider->introspectToken([
+    "token" => "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM1ZTIzZmViLTQyODQtNDMyZi1hZWIzLWRlMzJhNWFjMTZkNiJ9.eyJzaWQiOiIxMzczMmJkOC0wMWFlLTQyNmQtODY3MC01YTcwMzU1OTBlMmQiLCJzdWIiOiJBTk9OWU1PVVMiLCJhdWQiOiIzZTRhZDM0ZS05N2M1LTQxMGQtODJjOS0xZDlhNzE4MjBhODciLCJpYXQiOjE1NDA4MzIxNjQsImF1dGhfdGltZSI6MTU0MDgzMjE2NCwiaXNzIjoiaHR0cHM6Ly9uaWdodGx5YnVpbGQuY2lkYWFzLmRlIiwianRpIjoiNzA0MjI0ZTQtN2EwMy00YWZlLTgwYmUtYTVhNTE5ZWM0NzljIiwic2NvcGVzIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmVfYWNjZXNzIiwicGhvbmUiXSwiZXhwIjoxNTQwOTE4NTY0fQ.Gam9PYjXJSQDEQ-tUZnMbjoaaIFX-i67wF1wZa6eJhixRZB-8pRxesQs6dHtOpv2dTKjbIMEzVuJvYF7mdi78C2Qu1ZtxWARGu54MLctpLY5Jzuuup55pzK7jD50mrNIBPK1yMygv1bkzxejTo_SiDzbkN8QTe2gloAce3Icf6M",
+    "scopes" => ["email"],
+]);
+
+echo json_encode($tokenInfo);
+
+echo "Validate with roles";
+$tokenInfo = $provider->introspectToken([
+    "token" => "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM1ZTIzZmViLTQyODQtNDMyZi1hZWIzLWRlMzJhNWFjMTZkNiJ9.eyJzaWQiOiIxMzczMmJkOC0wMWFlLTQyNmQtODY3MC01YTcwMzU1OTBlMmQiLCJzdWIiOiJBTk9OWU1PVVMiLCJhdWQiOiIzZTRhZDM0ZS05N2M1LTQxMGQtODJjOS0xZDlhNzE4MjBhODciLCJpYXQiOjE1NDA4MzIxNjQsImF1dGhfdGltZSI6MTU0MDgzMjE2NCwiaXNzIjoiaHR0cHM6Ly9uaWdodGx5YnVpbGQuY2lkYWFzLmRlIiwianRpIjoiNzA0MjI0ZTQtN2EwMy00YWZlLTgwYmUtYTVhNTE5ZWM0NzljIiwic2NvcGVzIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmVfYWNjZXNzIiwicGhvbmUiXSwiZXhwIjoxNTQwOTE4NTY0fQ.Gam9PYjXJSQDEQ-tUZnMbjoaaIFX-i67wF1wZa6eJhixRZB-8pRxesQs6dHtOpv2dTKjbIMEzVuJvYF7mdi78C2Qu1ZtxWARGu54MLctpLY5Jzuuup55pzK7jD50mrNIBPK1yMygv1bkzxejTo_SiDzbkN8QTe2gloAce3Icf6M",
+    "roles" => ["admin"],
+]);
+
+echo json_encode($tokenInfo);
+
+echo "Validate with scopes and roles";
+$tokenInfo = $provider->introspectToken([
+    "token" => "eyJhbGciOiJSUzI1NiIsImtpZCI6ImM1ZTIzZmViLTQyODQtNDMyZi1hZWIzLWRlMzJhNWFjMTZkNiJ9.eyJzaWQiOiIxMzczMmJkOC0wMWFlLTQyNmQtODY3MC01YTcwMzU1OTBlMmQiLCJzdWIiOiJBTk9OWU1PVVMiLCJhdWQiOiIzZTRhZDM0ZS05N2M1LTQxMGQtODJjOS0xZDlhNzE4MjBhODciLCJpYXQiOjE1NDA4MzIxNjQsImF1dGhfdGltZSI6MTU0MDgzMjE2NCwiaXNzIjoiaHR0cHM6Ly9uaWdodGx5YnVpbGQuY2lkYWFzLmRlIiwianRpIjoiNzA0MjI0ZTQtN2EwMy00YWZlLTgwYmUtYTVhNTE5ZWM0NzljIiwic2NvcGVzIjpbIm9wZW5pZCIsImVtYWlsIiwicHJvZmlsZSIsIm9mZmxpbmVfYWNjZXNzIiwicGhvbmUiXSwiZXhwIjoxNTQwOTE4NTY0fQ.Gam9PYjXJSQDEQ-tUZnMbjoaaIFX-i67wF1wZa6eJhixRZB-8pRxesQs6dHtOpv2dTKjbIMEzVuJvYF7mdi78C2Qu1ZtxWARGu54MLctpLY5Jzuuup55pzK7jD50mrNIBPK1yMygv1bkzxejTo_SiDzbkN8QTe2gloAce3Icf6M",
+    "roles" => ["admin"],
+    "scopes" => ["email"],
+]);
+
+echo json_encode($tokenInfo);
+
+
 ```
-
-
-
-
-### Validate if the Token Expired or not 
-
-
-```php
-$isExpired = $provider->isTokenExpired($accessToken->getToken());
-if($isExpired){
-    print_r("Invalid access token");
-}else{
-    print_r("Valid access token");
-}
-print_r("\n");
-```
-
-
-
 
