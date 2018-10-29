@@ -223,6 +223,19 @@ class AbstractProvider
 
     }
 
+    public function endSessionURL($access_token_hint = "", $post_logout_redirect_uri = "")
+    {
+        $url = $this->openid_config["end_session_endpoint"];
+
+        $target_url = $url . "?access_token_hint=" . $access_token_hint;
+
+        if (!empty($post_logout_redirect_uri)) {
+            $target_url = $url . "?post_logout_redirect_uri=" . urlencode(post_logout_redirect_uri);
+        }
+
+        return $target_url;
+    }
+
     protected function getRandomState($length = 32)
     {
         // Converting bytes to hex will always double length. Hence, we can reduce
