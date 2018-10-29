@@ -1,4 +1,4 @@
-# Cidaas Provider for OAuth 2.0 Client
+# Cidaas Provider for Openid Connect and OAuth 2.0 Client
 
 
 ## Installation
