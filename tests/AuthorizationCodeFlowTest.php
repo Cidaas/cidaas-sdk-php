@@ -5,8 +5,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Cidaas\OAuth2\Client\Provider\Cidaas;
 
 $provider = new Cidaas([
-    'base_url' => 'https://cidaas-base-url.cidaas.de',
-    'client_id' => '55afd65d-ce02-45d1-93d8-b77b2bd286d2', // The client ID assigned to you by the provider
+    'base_url' => 'https://nightlybuild.cidaas.de',
+    'client_id' => '44afd65d-ce02-45d1-93d8-b77b2bd286d2', // The client ID assigned to you by the provider
     'client_secret' => '7ea886b9-2711-447c-baba-c5572ad7e1ac', // The client password assigned to you by the provider
     'redirect_uri' => 'http://localhost:8080',
 ]);
