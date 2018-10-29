@@ -3,28 +3,31 @@
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Cidaas\OAuth2\Client\Provider\Cidaas;
-use \League\OAuth2\Client\Token\AccessToken;
-
-
 
 $provider = new Cidaas([
-    'baseUrl'                 => 'yourcidaasbaseurl',
-    'clientId'                => 'xxxx',    // The client ID assigned to you by the provider
-    'clientSecret'            => 'yyyy',   // The client password assigned to you by the provider
-    'redirectUri'             => 'http://localhost:4200/auth/callback'
+    'base_url' => 'https://nightlybuild.cidaas.de',
+    'client_id' => '44afd65d-ce02-45d1-93d8-b77b2bd286d2', // The client ID assigned to you by the provider
+    'client_secret' => '7ea886b9-2711-447c-baba-c5572ad7e1ac', // The client password assigned to you by the provider
+    'redirect_uri' => 'http://localhost:8080',
 ]);
 
+$authz_url = $provider->getAuthorizationUrl(
+    [
+        "scope" => "openid email profile",
+        "response_type" => 'token',
+    ]
+);
 
-print_r($provider->getAuthorizationUrl(["response_type"=>'token']));
+echo $authz_url;
 print_r("\n");
 
-
-echo "Copy Paste the above URL in the browser and login and Enter the Access Token : ";
-$handle = fopen ("php://stdin","r");
+echo "Copy Paste the above URL in the browser and login and Enter the Code : ";
+$handle = fopen("php://stdin", "r");
 $line = fgets($handle);
 
+$resourceOwner = $provider->getUserInfo(trim($line));
 
-$accessToken2 = new AccessToken(["access_token" => trim($line)]);
-$resourceOwner = $provider->getResourceOwner($accessToken2);
-
-print_r($resourceOwner);
+print_r("\n");
+echo "User info";
+print_r("\n");
+echo json_encode($resourceOwner);
