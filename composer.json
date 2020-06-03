@@ -2,12 +2,12 @@
     "name": "cidaas/oauth2-cidaas",
     "description": "Cidaas OAuth 2.0 and OpenID connect Client SDK",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Vimal Prakash",
-            "email": "vimalprakashts@gmail.com",
-            "homepage": "https://widas.in"
-        }
+    	"authors": [
+    {
+      "name": "cidaas by Widas ID GmbH",
+      "email": "developer@widas.de",
+      "homepage": "https://www.cidaas.com"
+    }
     ],
     "keywords": [
         "oauth",
