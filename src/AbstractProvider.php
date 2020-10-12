@@ -154,7 +154,6 @@ class AbstractProvider
 
     public function getUserInfo($access_token, $sub = "")
     {
-
         if (empty($access_token)) {
             throw new \RuntimeException('access_token must not be empty');
         }
@@ -175,8 +174,6 @@ class AbstractProvider
         ]);
 
         $body = $response->getBody();
-
-        // echo $body;
 
         return $this->parseJson($body);
 
