@@ -4,4 +4,5 @@ composer.lock
 .idea/
 *.iml
 .phpunit.result.cache
+node_modules
 

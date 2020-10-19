@@ -12,7 +12,7 @@ final class ClientCredentialsGrantFlowTest extends TestCase
 
     protected function setUp(): void
     {
-        Dotenv::createImmutable(__DIR__, 'testconfig.env')->load();
+        Dotenv::createImmutable(__DIR__, 'nightlybuild-config.env')->load();
 
         $this->provider = new Cidaas([
             'base_url' => $_ENV['CIDAAS_BASE_URL'],

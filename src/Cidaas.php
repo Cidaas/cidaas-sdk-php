@@ -6,13 +6,8 @@ use Cidaas\OAuth2\Client\Provider\AbstractProvider;
 
 class Cidaas extends AbstractProvider
 {
-    public function getRequestId(): string
-    {
-        // TODO implement
-        return "";
-    }
 
-    public function loginWithCredentials($username, $username_type, $password, $requestId)
+    public function loginWithBrowser($username, $username_type, $password, $requestId)
     {
         // TODO implement
     }
@@ -44,30 +39,30 @@ class Cidaas extends AbstractProvider
 
     public function resetPassword()
     {
-        // TODO auch initiateResetPassword und handleResetPassword?
+        // TODO auch initiateResetPassword und handleResetPassword? - ja!
         // TODO implement
     }
+
+    // accessTokenStorage
 
     public function logoutUser()
     {
         // TODO implement
     }
 
-    public function getLoginURL(array $options = [])
+    public function getLoginUrl(array $options = [])
     {
-        // TODO do we really need this?
         $options["view_type"] = "login";
         return $this->getAuthorizationUrl($options);
     }
 
-    public function getRegisterURL(array $options = [])
+    public function getRegisterUrl(array $options = [])
     {
-        // TODO do we really need this?
         $options["view_type"] = "register";
         return $this->getAuthorizationUrl($options);
     }
 
-    public function getLogOutURL($access_token_hint = "", $post_logout_redirect_uri = "")
+    public function getLogoutURL($access_token_hint = "", $post_logout_redirect_uri = "")
     {
         // TODO do we really need this?
         return $this->endSessionURL($access_token_hint, $post_logout_redirect_uri);
