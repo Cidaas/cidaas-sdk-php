@@ -5,7 +5,7 @@ use Cidaas\OAuth2\Client\Provider\Cidaas;
 use Dotenv\Dotenv;
 use PHPUnit\Framework\TestCase;
 
-class IntrospectToken extends TestCase
+class IntrospectTokenOld extends TestCase
 {
     // TODO rewrite to get real tokens for tests, instead of static tokens used here
     public function dontTestStuff()

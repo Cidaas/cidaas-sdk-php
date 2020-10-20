@@ -5,7 +5,7 @@ use Cidaas\OAuth2\Client\Provider\Cidaas;
 use Dotenv\Dotenv;
 use PHPUnit\Framework\TestCase;
 
-final class ClientCredentialsGrantFlowTest extends TestCase
+final class ClientCredentialsGrantFlowOld extends TestCase
 {
     private $provider;
     private $accessToken;

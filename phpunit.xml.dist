@@ -9,7 +9,7 @@
          bootstrap="./vendor/autoload.php">
   <testsuites>
     <testsuite name="OAuth 2 Client Provider Test Suite">
-      <directory suffix=".php">./tests/</directory>
+      <directory suffix="Test.php">./tests/</directory>
     </testsuite>
   </testsuites>
 </phpunit>
