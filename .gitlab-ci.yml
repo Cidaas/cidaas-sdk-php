@@ -1,7 +1,7 @@
 include:
   - project: 'widas/codequality'
-    ref: master
-    file: 'ci_templates/php7-4.gitlab-ci.yml'
+    ref: ci_templates
+    file: 'ci_templates/php.gitlab-ci.yml'
 
 stages:
     - test
