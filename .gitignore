@@ -1,4 +1,9 @@
+reports
 vendor/
 composer.phar
 composer.lock
 .idea/
+*.iml
+.phpunit.result.cache
+node_modules
+
