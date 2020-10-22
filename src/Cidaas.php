@@ -3,16 +3,17 @@
 namespace Cidaas\OAuth2\Client\Provider;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\RequestOptions;
-use http\Exception\UnexpectedValueException;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Cidaas connector.
+ * @package Cidaas\OAuth2\Client\Provider
+ */
 class Cidaas {
-    protected $base_url = "";
-
     private static $well_known_uri = "/.well-known/openid-configuration";
-
     private static $requestIdUri = '/authz-srv/authrequest/authz/generate';
     private static $getRegistrationSetupUri = '/registration-setup-srv/public/list';
     private static $registerSdkUri = '/users-srv/register';
@@ -26,56 +27,51 @@ class Cidaas {
     private $loadOpenIdConfigPromise;
     private $openid_config;
 
+    private $baseUrl = "";
+    private $clientId = "";
+    private $clientSecret = "";
+    private $redirectUri = "";
     private $handler;
     private $debug = false;
 
-    private $client_id = "";
-    private $client_secret = "";
-    private $redirect_uri = "";
+    /**
+     * Cidaas constructor.
+     * @param string $baseUrl of cidaas server
+     * @param string $cliendId of cidaas application
+     * @param string $clientSecret of cidaas application
+     * @param string $redirectUri to redirect to after login
+     * @param HandlerStack|null $handler (optional) for http requests
+     * @param bool $debug (optional) to enable debugging
+     */
+    public function __construct(string $baseUrl, string $cliendId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false) {
+        $this->validate($baseUrl, '$baseUrl');
+        $this->validate($cliendId, '$cliendId');
+        $this->validate($clientSecret, '$clientSecret');
+        $this->validate($redirectUri, '$redirectUri');
 
-    public function __construct(array $options = []) {
-        foreach ($options as $option => $value) {
-            if (property_exists($this, $option)) {
-                $this->{$option} = $value;
-            }
+        $this->baseUrl = rtrim($baseUrl, "/");
+        $this->clientId = $cliendId;
+        $this->clientSecret = $clientSecret;
+        $this->redirectUri = $redirectUri;
+        if (isset($handler)) {
+            $this->handler = $handler;
         }
-
-        if (empty($options["base_url"])) {
-            throw new \RuntimeException('base_url is not specified');
-        }
-
-        $this->base_url = rtrim($options["base_url"], "/");
-
-        $this->client_id = $options["client_id"];
-        $this->client_secret = $options["client_secret"];
-        if (isset($options["redirect_uri"])) {
-            $this->redirect_uri = $options["redirect_uri"];
-        }
-
-        if (isset($options["handler"])) {
-            $this->handler = $options["handler"];
-        }
-
-        if (isset($options['debug'])) {
-            $this->debug = $options['debug'];
-        }
+        $this->debug = $debug;
 
         $this->resolveOpenIDConfiguration();
     }
 
-    private function getBaseUrl(): string {
-        if (empty($this->base_url)) {
-            throw new \RuntimeException('Cidaas base url is not specified');
-        }
-        return $this->base_url;
-    }
-
+    /**
+     * Retrieve the requestId for a given scope in order to start an oidc interaction.
+     * @param string $scope for the requestId
+     * @return PromiseInterface promise with the requestId or error
+     */
     public function getRequestId($scope = 'openid'): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
-            'client_id' => $this->client_id,
-            'redirect_uri' => $this->redirect_uri,
+            'client_id' => $this->clientId,
+            'redirect_uri' => $this->redirectUri,
             "response_type" => "code",
             "scope" => $scope,
             "nonce" => time()
@@ -88,9 +84,9 @@ class Cidaas {
                 'Accept' => '*/*'
             ]
         ];
-        $url = $this->getBaseURL() . self::$requestIdUri;
-        $responsePromise = $client->requestAsync('POST', $url, $options);
+        $url = $this->baseUrl . self::$requestIdUri;
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             $parsedBody = $this->parseJson($body);
@@ -98,10 +94,16 @@ class Cidaas {
         });
     }
 
-    public function getRegistrationSetup($requestId, $locale): PromiseInterface {
+    /**
+     * Retrieves registration data for dynamic implementation of registration page.
+     * @param string $requestId for retrieving registration data
+     * @param string $locale for registration data
+     * @return PromiseInterface promise with registration data or error
+     */
+    public function getRegistrationSetup(string $requestId, string $locale): PromiseInterface {
         $client = $this->createClient();
 
-        $url = $this->getBaseURL() . self::$getRegistrationSetupUri;
+        $url = $this->baseUrl . self::$getRegistrationSetupUri;
         $params = [
             'requestId' => $requestId,
             'acceptlanguage' => $locale
@@ -111,17 +113,22 @@ class Cidaas {
         ];
 
         $responsePromise = $client->getAsync($url, $options);
-
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function register(array $registrationFields, $requestId): PromiseInterface {
+    /**
+     * Register new user.
+     * @param array $registrationFields containing user data according to {@see getRegistrationSetup()}
+     * @param string $requestId for user registration
+     * @return PromiseInterface promise with user data or error
+     */
+    public function register(array $registrationFields, string $requestId): PromiseInterface {
         $client = $this->createClient();
 
-        $url = $this->getBaseURL() . self::$registerSdkUri;
+        $url = $this->baseUrl . self::$registerSdkUri;
         if (!isset($registrationFields['provider'])) {
             $registrationFields['provider'] = 'self';
         }
@@ -133,18 +140,26 @@ class Cidaas {
                 'requestId' => $requestId
             ],
         ];
-        $responsePromise = $client->requestAsync('POST', $url, $options);
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function loginWithCredentials($username, $username_type, $password, $requestId): PromiseInterface {
+    /**
+     * Performs a login with the given credentials.
+     * @param string $username for login
+     * @param string $username_type of $username
+     * @param string $password for login
+     * @param string $requestId for login request
+     * @return PromiseInterface promise with code or error
+     */
+    public function loginWithCredentials(string $username, string $username_type, string $password, string $requestId): PromiseInterface {
         $client = $this->createClient();
 
-        $url = $this->getBaseURL() . self::$loginSdkUri;
+        $url = $this->baseUrl . self::$loginSdkUri;
         $params = [
             'username' => $username,
             'password' => $password,
@@ -158,23 +173,48 @@ class Cidaas {
                 'Content-Type' => 'application/json'
             ]
         ];
-        $responsePromise = $client->requestAsync('POST', $url, $options);
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function loginWithBrowser(): PromiseInterface {
-        // TODO implement
+    /**
+     * Performs a redirect to the hosted login page.
+     * @throws \LogicException if no loginUrl has been set
+     */
+    public function loginWithBrowser() {
+        $loginUrl = $this->getOpenIdConfig()['authorization_endpoint'];
+        $loginUrl .= '?client_id=' . $this->clientId;
+        $loginUrl .= '&response_type=code';
+        $loginUrl .= '&scope=' . urlencode('profile email groups');
+        $loginUrl .= '&redirect_uri=' . $this->redirectUri;
+        $loginUrl .= '&nonce=' . time();
+
+        header('Location: ' . $loginUrl);
     }
 
-    public function loginCallback(): PromiseInterface {
-        // TODO implement
+    /**
+     * Returns all query parameters from get request. The result should contain 'code' to be used for retrieving access token.
+     * @return array with $_GET
+     */
+    public function loginCallback(): array {
+        return $_GET;
     }
 
-    public function changePassword($oldPassword, $newPassword, $confirmPassword, $identityId, $accessToken) {
+    /**
+     * Change a password of a given identity.
+     *
+     * @param string $oldPassword of the identity
+     * @param string $newPassword of the identity
+     * @param string $confirmPassword to match with newPassword above
+     * @param string $identityId to identify user
+     * @param string $accessToken for access to password change api
+     * @return PromiseInterface with promise containing success or error message
+     */
+    public function changePassword(string $oldPassword, string $newPassword, string $confirmPassword, string $identityId, string $accessToken) {
         $client = $this->createClient();
 
         $params = [
@@ -191,130 +231,79 @@ class Cidaas {
                 'Authorization' => 'Bearer ' . $accessToken
             ]
         ];
-        $url = $this->getBaseURL() . self::$changePasswordUri;
-        $responsePromise = $client->requestAsync('POST', $url, $options);
+        $url = $this->baseUrl . self::$changePasswordUri;
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-
-    private function resolveOpenIDConfiguration(): void {
-        if (empty($this->getBaseUrl())) {
-            throw new \RuntimeException('Cidaas base url is not specified');
-        }
-
-        $openid_configuration_url = $this->getBaseURL() . self::$well_known_uri;
-        $client = $this->createClient();
-
-        $this->loadOpenIdConfigPromise = $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
-            $body = $response->getBody();
-            $this->openid_config = $this->parseJson($body);
-        });
-    }
-
-    private function getOpenIdConfig(): array {
-        if (!isset($this->openid_config)) {
-            $this->loadOpenIdConfigPromise->wait();
-        }
-        return $this->openid_config;
-    }
-
-    protected function getAuthorizationUrl(array $options = []): string {
-        foreach ($options as $option => $value) {
-            if (property_exists($this, $option)) {
-                $this->{$option} = $value;
-            }
-        }
-
-        $url = $this->getOpenIdConfig()["authorization_endpoint"];
-
-        if (!empty($options["scope"])) {
-            $scope = $options["scope"];
-            $scopes = explode(" ", $scope);
-            if (in_array("openid", $scopes)) {
-                if (empty($options["nonce"])) {
-                    $options["nonce"] = $this->getRandomState();
-                }
-            }
-        }
-        if (empty($options["state"])) {
-            $options["state"] = $this->getRandomState();
-        }
-        if (empty($options["response_type"])) {
-            $options["response_type"] = "code";
-        }
-        $options["client_id"] = $this->client_id;
-
-        if (empty($options["redirect_uri"])) {
-            $options["redirect_uri"] = $this->redirect_uri;
-        }
-
-        return $this->appendQuery($url, $options);
-    }
-
-    public function getAccessToken(string $grant_type, array $options = []): PromiseInterface {
+    /**
+     * Retrieve access token for api access.
+     * @param string $grantType for accessToken {@see GrantType}
+     * @param string $code only required for {@see GrantType::$AuthorizationCode}
+     * @param string $refreshToken only required for {@see GrantType::$RefreshToken}
+     * @return PromiseInterface promise with access token or error
+     */
+    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = ''): PromiseInterface {
         $params = [];
-        if ($grant_type === GrantType::AuthorizationCode) {
-            if (empty($options['code'])) {
-                throw new \RuntimeException('code must not be empty in authorization_code flow');
+        if ($grantType === GrantType::AuthorizationCode) {
+            if (empty($code)) {
+                throw new \InvalidArgumentException('code must not be empty in authorization_code flow');
             }
 
             $params = [
-                'client_id' => $this->client_id,
-                'client_secret' => $this->client_secret,
-                'redirect_uri' => $this->redirect_uri,
+                'client_id' => $this->clientId,
+                'client_secret' => $this->clientSecret,
+                'redirect_uri' => $this->redirectUri,
                 'grant_type' => 'authorization_code',
-                'code' => $options['code'],
+                'code' => $code,
             ];
-        } else if ($grant_type === GrantType::RefreshToken) {
-            if (empty($options['refresh_token'])) {
-                throw new \RuntimeException('refresh_token must not be empty in refresh_token flow');
+        } else if ($grantType === GrantType::RefreshToken) {
+            if (empty($refreshToken)) {
+                throw new \InvalidArgumentException('refreshToken must not be empty in refresh_token flow');
             }
             $params = [
-                'client_id' => $this->client_id,
-                'client_secret' => $this->client_secret,
+                'client_id' => $this->clientId,
+                'client_secret' => $this->clientSecret,
                 'grant_type' => 'refresh_token',
-                'refresh_token' => $options['refresh_token'],
+                'refresh_token' => $refreshToken,
             ];
-        } else if ($grant_type === GrantType::ClientCredentials) {
+        } else if ($grantType === GrantType::ClientCredentials) {
             $params = [
-                'client_id' => $this->client_id,
-                'client_secret' => $this->client_secret,
+                'client_id' => $this->clientId,
+                'client_secret' => $this->clientSecret,
                 'grant_type' => 'client_credentials',
             ];
         } else {
-            throw new \RuntimeException('invalid grant type');
+            throw new \InvalidArgumentException('invalid grant type');
         }
-
-        $client = $this->createClient();
 
         $url = $this->getOpenIdConfig()["token_endpoint"];
 
-        $responsePromise = $client->requestAsync('POST', $url, [
-            'form_params' => $params,
-        ]);
+        $client = $this->createClient();
+        $responsePromise = $client->requestAsync('POST', $url, ['form_params' => $params]);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function getUserProfile($accessToken, $sub = ""): PromiseInterface {
-        if (empty($accessToken)) {
-            throw new \RuntimeException('access_token must not be empty');
-        }
-
+    /**
+     * Retrieve user profile of current user or a given sub.
+     * @param string $accessToken to access api
+     * @param string $sub (optional) for user profile to retrieve
+     * @return PromiseInterface promise with user profile or error
+     */
+    public function getUserProfile(string $accessToken, string $sub = ""): PromiseInterface {
         $url = $this->getOpenIdConfig()["userinfo_endpoint"];
-
         if (!empty($sub)) {
-            $url = $url . "/" . $sub;
+            $url .= "/" . $sub;
         }
 
         $client = $this->createClient();
-
         $responsePromise = $client->requestAsync('POST', $url, [
             "headers" => [
                 "Authorization" => "Bearer " . $accessToken,
@@ -328,7 +317,13 @@ class Cidaas {
         });
     }
 
-    public function initiateResetPassword($email, $requestId): PromiseInterface {
+    /**
+     * Start a password reset process.
+     * @param string $email address for password reset
+     * @param string $requestId for api access
+     * @return PromiseInterface promise with resetRequestId or error
+     */
+    public function initiateResetPassword(string $email, string $requestId): PromiseInterface {
         // TODO andere Medien statt email?
         $client = $this->createClient();
 
@@ -345,16 +340,22 @@ class Cidaas {
                 'Content-Type' => 'application/json'
             ]
         ];
-        $url = $this->getBaseURL() . self::$initiateResetPasswordUri;
-        $responsePromise = $client->requestAsync('POST', $url, $options);
+        $url = $this->baseUrl . self::$initiateResetPasswordUri;
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function handleResetPassword($code, $resetRequestId): PromiseInterface {
+    /**
+     * Verify code sent during {@see self::initiateResetPassword()}.
+     * @param string $code sent by password reset method
+     * @param string $resetRequestId retrieved from {@see self::initiateResetPassword()}
+     * @return PromiseInterface promise with exchangeId and resetRequestId or error
+     */
+    public function handleResetPassword(string $code, string $resetRequestId): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
@@ -368,16 +369,24 @@ class Cidaas {
                 'Content-Type' => 'application/json'
             ]
         ];
-        $url = $this->getBaseURL() . self::$handleResetPasswordUri;
-        $responsePromise = $client->requestAsync('POST', $url, $options);
+        $url = $this->baseUrl . self::$handleResetPasswordUri;
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function resetPassword($password, $confirmPassword, $exchangeId, $resetRequestId): PromiseInterface {
+    /**
+     * Perform password reset.
+     * @param string $password to set
+     * @param string $confirmPassword to confirm $password
+     * @param string $exchangeId from {@see self::handleResetPassword()}
+     * @param string $resetRequestId from {@see self::handleResetPassword()}
+     * @return PromiseInterface promise with success or error message
+     */
+    public function resetPassword(string $password, string $confirmPassword, string $exchangeId, string $resetRequestId): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
@@ -393,16 +402,24 @@ class Cidaas {
                 'Content-Type' => 'application/json'
             ]
         ];
-        $url = $this->getBaseURL() . self::$resetPasswordUri;
-        $responsePromise = $client->requestAsync('POST', $url, $options);
+        $url = $this->baseUrl . self::$resetPasswordUri;
 
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function updateProfile($sub, $fields, $accessToken, $provider = 'self'): PromiseInterface {
+    /**
+     * Update user profile.
+     * @param string $sub of profile to be updated
+     * @param array $fields to update
+     * @param string $accessToken for api access
+     * @param string $provider of identity profile
+     * @return PromiseInterface promise with success or error message
+     */
+    public function updateProfile(string $sub, array $fields, string $accessToken, string $provider = 'self'): PromiseInterface {
         $client = $this->createClient();
 
         $fields['provider'] = $provider;
@@ -414,52 +431,55 @@ class Cidaas {
                 'Authorization' => 'Bearer ' . $accessToken
             ]
         ];
-        $url = $this->getBaseURL() . self::$updateProfileUriPrefix . $sub;
-        $responsePromise = $client->requestAsync('PUT', $url, $options);
+        $url = $this->baseUrl . self::$updateProfileUriPrefix . $sub;
 
+        $responsePromise = $client->requestAsync('PUT', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function validateAccessToken(array $options = [], $access_token = ""): PromiseInterface {
-        if (empty($options["token"])) {
-            throw new \RuntimeException('token must not be empty');
-        }
-        if (empty($options["token_type_hint"])) {
-            $options["token_type_hint"] = "access_token";
-        }
-
-        $authHeader = "";
-        if (!empty($access_token)) {
-            $authHeader = "Bearer " . $access_token;
-        } else {
-            $authHeader = "Basic " . base64_encode($this->client_id . ":" . $this->client_secret);
-        }
-
-        if (empty($authHeader)) {
-            throw new \RuntimeException('auth must not be empty');
-        }
-
-        $url = $this->getOpenIdConfig()["introspection_endpoint"];
-
+    /**
+     * Validates a given access token.
+     * @param string $accessTokenToValidate to validate
+     * @param string $accessTokenForApiAccess to access api
+     * @return PromiseInterface with success or error message
+     */
+    public function validateAccessToken(string $accessTokenToValidate, $accessTokenForApiAccess = ""): PromiseInterface {
         $client = $this->createClient();
 
-        $responsePromise = $client->requestAsync('POST', $url, [
-            "headers" => [
-                "Authorization" => $authHeader,
-                'Content-Type' => 'application/json',
-            ],
-            "json" => $options,
-        ]);
+        $params = [
+            'token_type_hint' => 'access_token',
+            'token' => $accessTokenToValidate
+        ];
+        $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
+        $headers = ['Content-Type' => 'application/json'];
+        if (empty($accessTokenForApiAccess)) {
+            $headers['Authorization'] = 'Basic ' . base64_encode($this->clientId . ":" . $this->clientSecret);
+        } else {
+            $headers['Authorization'] = 'Bearer ' . $accessTokenForApiAccess;
+        }
+        $options = [
+            RequestOptions::HEADERS => $headers,
+            RequestOptions::BODY => $postBody
+        ];
+        $url = $this->getOpenIdConfig()["introspection_endpoint"];
+
+        $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         });
     }
 
-    public function logout($accessToken, $postLogoutUri = ""): PromiseInterface {
+    /**
+     * Perform logout at server. Please note, that this method does not perform a redirect to logout page, but returns the response, if logout is completed.
+     * @param string $accessToken for api access
+     * @param string $postLogoutUri (optional) to redirect to after logout
+     * @return PromiseInterface promise with success (redirect) or error message
+     */
+    public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface {
         $url = $this->getOpenIdConfig()["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
 
         if (!empty($postLogoutUri)) {
@@ -481,37 +501,40 @@ class Cidaas {
         return $client;
     }
 
-    protected function getRandomState($length = 32): string {
-        // Converting bytes to hex will always double length. Hence, we can reduce
-        // the amount of bytes by half to produce the correct length.
-        return bin2hex(random_bytes($length / 2));
-    }
-
-    protected function appendQuery($url, array $queryArray = []): string {
-        $queryString = "";
-        foreach ($queryArray as $key => $value) {
-            $queryString = $queryString . $key . "=" . urlencode($value) . '&';
-        }
-        $queryString = rtrim($queryString, "&");
-
-        if ($queryString) {
-            $glue = strpos($url, '?') === false ? '?' : '&';
-            return $url . $glue . $queryString;
-        }
-
-        return $url;
-    }
-
-    protected function parseJson($content): array {
+    private function parseJson($content): array {
         $content = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new UnexpectedValueException(sprintf(
-                "Failed to parse JSON response: %s",
-                json_last_error_msg()
-            ));
+            throw new UnexpectedValueException(sprintf("Failed to parse JSON response: %s", json_last_error_msg()));
         }
 
         return $content;
+    }
+
+    private function validate($param, $name) {
+        if (!isset($param) || empty($param)) {
+            throw new \InvalidArgumentException($name . ' is not specified');
+        }
+    }
+
+    private function resolveOpenIDConfiguration(): void {
+        if (empty($this->baseUrl)) {
+            throw new \RuntimeException('Cidaas base url is not specified');
+        }
+
+        $openid_configuration_url = $this->baseUrl . self::$well_known_uri;
+        $client = $this->createClient();
+
+        $this->loadOpenIdConfigPromise = $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
+            $body = $response->getBody();
+            $this->openid_config = $this->parseJson($body);
+        });
+    }
+
+    private function getOpenIdConfig(): array {
+        if (!isset($this->openid_config)) {
+            $this->loadOpenIdConfigPromise->wait();
+        }
+        return $this->openid_config;
     }
 }

@@ -24,7 +24,7 @@ final class LogoutTest extends AbstractCidaasTestParent {
             return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
-            return $this->provider->getAccessToken(GrantType::AuthorizationCode, ['code' => $code]);
+            return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
         })->then(function ($accessTokenResponse) {
             return $accessTokenResponse['access_token'];
         });
@@ -66,7 +66,7 @@ final class LogoutTest extends AbstractCidaasTestParent {
         })->wait();
 
         assertEquals(302, $response->getStatusCode());
-        assertEquals(self::$postLogoutUri, $response->getHeaders()['location'][0]);
+        assertEquals(self::$postLogoutUri, $response->getHeader('location')[0]);
     }
 
     public function test_logout_withInvalidAccessToken_returnsErrorResult() {

@@ -25,7 +25,7 @@ final class GetUserProfileTest extends AbstractCidaasTestParent {
             return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
-            return $this->provider->getAccessToken(GrantType::AuthorizationCode, ['code' => $code]);
+            return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
         })->then(function ($accessTokenResponse) {
             return $accessTokenResponse['access_token'];
         });

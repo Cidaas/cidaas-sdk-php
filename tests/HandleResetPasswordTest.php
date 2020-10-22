@@ -9,7 +9,7 @@ use function PHPUnit\Framework\assertFalse;
 use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertTrue;
 
-final class ValidateResetPasswordTest extends AbstractCidaasTestParent {
+final class HandleResetPasswordTest extends AbstractCidaasTestParent {
     private static $RESET_CODE = '641985';
     private static $EXCHANGE_ID = 'c74b059f-3615-4446-a6c7-433707814a9a';
     private static $RESET_REQUEST_ID = 'aea6496b-a017-4486-9592-3b559ce59dcc';
