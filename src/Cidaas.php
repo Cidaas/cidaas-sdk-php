@@ -183,13 +183,14 @@ class Cidaas {
 
     /**
      * Performs a redirect to the hosted login page.
+     * @param string scope for login
      * @throws \LogicException if no loginUrl has been set
      */
-    public function loginWithBrowser() {
+    public function loginWithBrowser(string $scope = 'openid profile offline_access') {
         $loginUrl = $this->getOpenIdConfig()['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
-        $loginUrl .= '&scope=' . urlencode('profile email groups');
+        $loginUrl .= '&scope=' . urlencode($scope);
         $loginUrl .= '&redirect_uri=' . $this->redirectUri;
         $loginUrl .= '&nonce=' . time();
 

@@ -19,6 +19,6 @@ final class LoginWithBrowserTest extends AbstractCidaasTestParent {
 
         $this->provider->loginWithBrowser();
 
-        assertStringContainsString('Location: https://nightlybuild.cidaas.de/authz-srv/authz?client_id=' . $_ENV['CIDAAS_CLIENT_ID'] . '&response_type=code&scope=' . urlencode('profile email groups') . '&redirect_uri=' . $_ENV['CIDAAS_REDIRECT_URI'] . '&nonce=', parent::$headers[0]);
+        assertStringContainsString('Location: https://nightlybuild.cidaas.de/authz-srv/authz?client_id=' . $_ENV['CIDAAS_CLIENT_ID'] . '&response_type=code&scope=' . urlencode('openid profile offline_access') . '&redirect_uri=' . $_ENV['CIDAAS_REDIRECT_URI'] . '&nonce=', parent::$headers[0]);
     }
 }
