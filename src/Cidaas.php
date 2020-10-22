@@ -24,9 +24,7 @@ class Cidaas {
     private static $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
     private static $resetPasswordUri = '/users-srv/resetpassword/accept';
 
-    private $loadOpenIdConfigPromise;
     private $openid_config;
-
     private $baseUrl = "";
     private $clientId = "";
     private $clientSecret = "";
@@ -58,7 +56,7 @@ class Cidaas {
         }
         $this->debug = $debug;
 
-        $this->resolveOpenIDConfiguration();
+        $this->openid_config = $this->loadOpenIdConfig();
     }
 
     /**
@@ -187,7 +185,7 @@ class Cidaas {
      * @throws \LogicException if no loginUrl has been set
      */
     public function loginWithBrowser(string $scope = 'openid profile offline_access') {
-        $loginUrl = $this->getOpenIdConfig()['authorization_endpoint'];
+        $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
         $loginUrl .= '&scope=' . urlencode($scope);
@@ -282,7 +280,7 @@ class Cidaas {
             throw new \InvalidArgumentException('invalid grant type');
         }
 
-        $url = $this->getOpenIdConfig()["token_endpoint"];
+        $url = $this->openid_config["token_endpoint"];
 
         $client = $this->createClient();
         $responsePromise = $client->requestAsync('POST', $url, ['form_params' => $params]);
@@ -299,7 +297,7 @@ class Cidaas {
      * @return PromiseInterface promise with user profile or error
      */
     public function getUserProfile(string $accessToken, string $sub = ""): PromiseInterface {
-        $url = $this->getOpenIdConfig()["userinfo_endpoint"];
+        $url = $this->openid_config["userinfo_endpoint"];
         if (!empty($sub)) {
             $url .= "/" . $sub;
         }
@@ -465,7 +463,7 @@ class Cidaas {
             RequestOptions::HEADERS => $headers,
             RequestOptions::BODY => $postBody
         ];
-        $url = $this->getOpenIdConfig()["introspection_endpoint"];
+        $url = $this->openid_config["introspection_endpoint"];
 
         $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
@@ -481,7 +479,7 @@ class Cidaas {
      * @return PromiseInterface promise with success (redirect) or error message
      */
     public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface {
-        $url = $this->getOpenIdConfig()["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
+        $url = $this->openid_config["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
 
         if (!empty($postLogoutUri)) {
             $url .= "&post_logout_redirect_uri=" . urlencode($postLogoutUri);
@@ -518,24 +516,14 @@ class Cidaas {
         }
     }
 
-    private function resolveOpenIDConfiguration(): void {
-        if (empty($this->baseUrl)) {
-            throw new \RuntimeException('Cidaas base url is not specified');
-        }
-
+    private function loadOpenIdConfig(): array {
         $openid_configuration_url = $this->baseUrl . self::$well_known_uri;
         $client = $this->createClient();
-
-        $this->loadOpenIdConfigPromise = $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
+        $openid_config = $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
             $body = $response->getBody();
-            $this->openid_config = $this->parseJson($body);
-        });
-    }
+            return $this->parseJson($body);
+        })->wait();
 
-    private function getOpenIdConfig(): array {
-        if (!isset($this->openid_config)) {
-            $this->loadOpenIdConfigPromise->wait();
-        }
-        return $this->openid_config;
+        return $openid_config;
     }
 }
