@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Cidaas\OAuth2\Client\Provider\AbstractCidaasTestParent;
 use Dotenv\Dotenv;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
