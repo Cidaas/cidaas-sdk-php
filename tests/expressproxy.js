@@ -16,6 +16,7 @@ app.use('/', proxy('https://nightlybuild.cidaas.de', {
         return Buffer.from(requestBody);
     },
     userResDecorator: function (proxyRes, proxyResData, userReq, userRes) {
+        console.log('Response status code: ' + proxyRes.statusCode);
         console.log('Response headers:');
         console.log(proxyRes.headers);
         console.log('Response body:');

@@ -1,53 +1,19 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/AbstractCidaasTestParent.php';
 
-use Cidaas\OAuth2\Client\Provider\Cidaas;
-use Dotenv\Dotenv;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\TestCase;
+use Cidaas\OAuth2\Client\Provider\AbstractCidaasTestParent;
 use function PHPUnit\Framework\assertEquals;
 use function PHPUnit\Framework\assertNotNull;
 
+final class GetRequestIdTest extends AbstractCidaasTestParent {
 
-final class GetRequestIdTest extends TestCase
-{
-    private static $requestId = '758d173b-89fb-4d37-84b4-e52a0ce63a78';
-    private $provider;
-    private $mock;
-
-    protected function setUp(): void
-    {
-        Dotenv::createImmutable(__DIR__, 'testconfig.env')->load();
-
-        $this->mock = new MockHandler([
-            new Response(200, [], '{"issuer":"https://nightlybuild.cidaas.de","userinfo_endpoint":"https://nightlybuild.cidaas.de/users-srv/userinfo","authorization_endpoint":"https://nightlybuild.cidaas.de/authz-srv/authz","introspection_endpoint":"https://nightlybuild.cidaas.de/token-srv/introspect","introspection_async_update_endpoint":"https://nightlybuild.cidaas.de/token-srv/introspect/async/tokenusage","revocation_endpoint":"https://nightlybuild.cidaas.de/token-srv/revoke","token_endpoint":"https://nightlybuild.cidaas.de/token-srv/token","jwks_uri":"https://nightlybuild.cidaas.de/.well-known/jwks.json","check_session_iframe":"https://nightlybuild.cidaas.de/session/check_session","end_session_endpoint":"https://nightlybuild.cidaas.de/session/end_session","social_provider_token_resolver_endpoint":"https://nightlybuild.cidaas.de/login-srv/social/token","device_authorization_endpoint":"https://nightlybuild.cidaas.de/authz-srv/device/authz","subject_types_supported":["public"],"scopes_supported":["openid","profile","email","phone","address","offline_access","identities","roles","groups"],"response_types_supported":["code","token","id_token","code token","code id_token","token id_token","code token id_token"],"response_modes_supported":["query","fragment","form_post"],"grant_types_supported":["implicit","authorization_code","refresh_token","password","client_credentials"],"id_token_signing_alg_values_supported":["HS256","RS256"],"id_token_encryption_alg_values_supported":["RS256"],"id_token_encryption_enc_values_supported":["A128CBC-HS256"],"userinfo_signing_alg_values_supported":["HS256","RS256"],"userinfo_encryption_alg_values_supported":["RS256"],"userinfo_encryption_enc_values_supported":["A128CBC-HS256"],"request_object_signing_alg_values_supported":["HS256","RS256"],"request_object_encryption_alg_values_supported":["RS256"],"request_object_encryption_enc_values_supported":["A128CBC-HS256"],"token_endpoint_auth_methods_supported":["client_secret_basic","client_secret_post","client_secret_jwt","private_key_jwt"],"token_endpoint_auth_signing_alg_values_supported":["HS256","RS256"],"claims_supported":["aud","auth_time","created_at","email","email_verified","exp","family_name","given_name","iat","identities","iss","mobile_number","name","nickname","phone_number","picture","sub"],"claims_parameter_supported":false,"claim_types_supported":["normal"],"service_documentation":"https://docs.cidaas.de/","claims_locales_supported":["en-US"],"ui_locales_supported":["en-US","de-DE"],"display_values_supported":["page","popup"],"code_challenge_methods_supported":["plain","S256"],"request_parameter_supported":true,"request_uri_parameter_supported":true,"require_request_uri_registration":false,"op_policy_uri":"https://www.cidaas.com/privacy-policy/","op_tos_uri":"https://www.cidaas.com/terms-of-use/","scim_endpoint":"https://nightlybuild.cidaas.de/users-srv/scim/v2"}'),
-            new Response(200, [], '{
-                "success": true,
-                "status": 200,
-                "data": {
-                    "groupname": "default",
-                    "lang": "",
-                    "view_type": "login",
-                    "requestId": "' . self::$requestId . '"
-                }
-            }')]);
-
-        $this->provider = new Cidaas([
-            'base_url' => $_ENV['CIDAAS_BASE_URL'],
-            //'base_url' => $_ENV['CIDAAS_BASE_URL_WITH_PROXY'],
-            'client_id' => $_ENV['CIDAAS_CLIENT_ID'],
-            'client_secret' => $_ENV['CIDAAS_CLIENT_SECRET'],
-            'redirect_uri' => $_ENV['CIDAAS_REDIRECT_URI'],
-            'handler' => HandlerStack::create($this->mock),
-            'debug' => true
-        ]);
+    protected function setUp(): void {
+        $this->setUpCidaas();
     }
 
-    public function test_getRequestId_withClientIdAndSecretSet_serverCalledWithClientIdAndSecret()
-    {
-        $this->provider->getRequestId();
+    public function test_getRequestId_withClientIdAndSecretSet_serverCalledWithClientIdSecretAndDefaultScope() {
+        $this->provider->getRequestId()->wait();
 
         $request = $this->mock->getLastRequest();
         assertEquals($_ENV['CIDAAS_BASE_URL'] . '/authz-srv/authrequest/authz/generate', $request->getUri());
@@ -55,14 +21,27 @@ final class GetRequestIdTest extends TestCase
         assertEquals($_ENV['CIDAAS_CLIENT_ID'], $body['client_id']);
         assertEquals($_ENV['CIDAAS_REDIRECT_URI'], $body['redirect_uri']);
         assertEquals('code', $body['response_type']);
-        assertEquals('openid identities', $body['scope']);
+        assertEquals('openid', $body['scope']);
         assertNotNull($body['nonce']);
     }
 
-    public function test_getRequestId_withClientIdAndSecretSet_returnsRequestIdFromServer()
-    {
+    public function test_getRequestId_withClientIdAndSecretSetAndScopeGiven_serverCalledWithClientIdSecretAndScope() {
+        $scope = 'openid profile';
+        $this->provider->getRequestId($scope)->wait();
+
+        $request = $this->mock->getLastRequest();
+        assertEquals($_ENV['CIDAAS_BASE_URL'] . '/authz-srv/authrequest/authz/generate', $request->getUri());
+        $body = json_decode($request->getBody(), true);
+        assertEquals($_ENV['CIDAAS_CLIENT_ID'], $body['client_id']);
+        assertEquals($_ENV['CIDAAS_REDIRECT_URI'], $body['redirect_uri']);
+        assertEquals('code', $body['response_type']);
+        assertEquals($scope, $body['scope']);
+        assertNotNull($body['nonce']);
+    }
+
+    public function test_getRequestId_withClientIdAndSecretSet_returnsRequestIdFromServer() {
         $requestId = $this->provider->getRequestId()->wait();
 
-        assertEquals(self::$requestId, $requestId);
+        assertEquals(self::$REQUEST_ID, $requestId);
     }
 }
