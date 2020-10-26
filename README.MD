@@ -10,7 +10,7 @@ In order to use this sdk, you need to perform the following steps:
    "repositories": [
      {
        "type": "vcs",
-       "url": "http://nas.home.happypenguins.net:9080/git/joerg/cidaas-php-sdk.git"
+       "url": "https://github.com/Cidaas/cidaas-sdk-php.git"
      }
    ]
    ```
