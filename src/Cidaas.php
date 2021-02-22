@@ -123,7 +123,7 @@ class Cidaas {
      * @param string $requestId for user registration
      * @return PromiseInterface promise with user data or error
      */
-    public function register(array $registrationFields, string $requestId): PromiseInterface {
+    public function register(array $registrationFields, string $requestId, string $acceptLanguage = 'en-GB'): PromiseInterface {
         $client = $this->createClient();
 
         $url = $this->baseUrl . self::$registerSdkUri;
@@ -135,7 +135,8 @@ class Cidaas {
             RequestOptions::BODY => $postBody,
             RequestOptions::HEADERS => [
                 'Content-Type' => 'application/json',
-                'requestId' => $requestId
+                'requestId' => $requestId,
+                'accept-language' => $acceptLanguage
             ],
         ];
 
