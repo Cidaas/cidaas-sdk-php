@@ -184,15 +184,20 @@ class Cidaas {
     /**
      * Performs a redirect to the hosted login page.
      * @param string scope for login
+     * @param string $uiLocales (optional) optionally adds the ui_locales parameter to the redirect url.
      * @throws \LogicException if no loginUrl has been set
      */
-    public function loginWithBrowser(string $scope = 'openid profile offline_access') {
+    public function loginWithBrowser(string $scope = 'openid profile offline_access', string $uiLocales = null) {
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
         $loginUrl .= '&scope=' . urlencode($scope);
         $loginUrl .= '&redirect_uri=' . $this->redirectUri;
         $loginUrl .= '&nonce=' . time();
+
+        if (!is_null($uiLocales)) {
+            $loginUrl .= '&ui_locales=' . $uiLocales;
+        }
 
         header('Location: ' . $loginUrl);
     }
