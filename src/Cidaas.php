@@ -184,15 +184,20 @@ class Cidaas {
     /**
      * Performs a redirect to the hosted login page.
      * @param string scope for login
+     * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      * @throws \LogicException if no loginUrl has been set
      */
-    public function loginWithBrowser(string $scope = 'openid profile offline_access') {
+    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
         $loginUrl .= '&scope=' . urlencode($scope);
         $loginUrl .= '&redirect_uri=' . $this->redirectUri;
         $loginUrl .= '&nonce=' . time();
+
+        foreach ($queryParameters as $key => $value) {
+            $loginUrl .= '&' . $key . '=' . $value;
+        }
 
         header('Location: ' . $loginUrl);
     }
