@@ -62,15 +62,16 @@ class Cidaas {
     /**
      * Retrieve the requestId for a given scope in order to start an oidc interaction.
      * @param string $scope for the requestId
+     * @param string $responseType for the response type
      * @return PromiseInterface promise with the requestId or error
      */
-    public function getRequestId($scope = 'openid'): PromiseInterface {
+    public function getRequestId($scope = 'openid', $responseType = 'code'): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
             'client_id' => $this->clientId,
             'redirect_uri' => $this->redirectUri,
-            "response_type" => "code",
+            "response_type" => $responseType,
             "scope" => $scope,
             "nonce" => time()
         ];
