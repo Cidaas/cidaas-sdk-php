@@ -63,9 +63,10 @@ class Cidaas {
      * Retrieve the requestId for a given scope in order to start an oidc interaction.
      * @param string $scope for the requestId
      * @param string $responseType for the response type
+     * @param string $acceptLanguage for the language. defaults to "en-GB"
      * @return PromiseInterface promise with the requestId or error
      */
-    public function getRequestId($scope = 'openid', $responseType = 'code'): PromiseInterface {
+    public function getRequestId($scope = 'openid', $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
@@ -80,7 +81,8 @@ class Cidaas {
             RequestOptions::BODY => $postBody,
             RequestOptions::HEADERS => [
                 'Content-Type' => 'application/json',
-                'Accept' => '*/*'
+                'Accept' => '*/*',
+                'accept-language' => $acceptLanguage
             ]
         ];
         $url = $this->baseUrl . self::$requestIdUri;
