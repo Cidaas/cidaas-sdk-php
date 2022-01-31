@@ -16,7 +16,7 @@ In order to use this sdk, you need to perform the following steps:
    ```
 1. Install sdk dependency using composer
    ```
-   composer require "cidaas/oauth2-cidaas:dev-master"
+   composer require "cidaas/oauth2-cidaas:<tag / branch>", e.g. "cidaas/oauth2-cidaas:dev-master"
    ```
 
 

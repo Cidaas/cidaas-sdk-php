@@ -1,7 +1,6 @@
 {
   "name": "cidaas/oauth2-cidaas",
   "description": "Cidaas OAuth 2.0 and OpenID connect Client SDK",
-  "version": "2.0.0",
   "license": "MIT",
   "authors": [
     {
