@@ -17,7 +17,7 @@ class Cidaas {
     private static $requestIdUri = '/authz-srv/authrequest/authz/generate';
     private static $getRegistrationSetupUri = '/registration-setup-srv/public/list';
     private static $registerSdkUri = '/users-srv/register';
-    private static $loginSdkUri = '/login-srv/login';
+    private static $loginSdkUri = '/login-srv/login/sdk';
     private static $changePasswordUri = '/users-srv/changepassword';
     private static $updateProfileUriPrefix = '/users-srv/user/profile/';
     private static $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
@@ -514,7 +514,7 @@ class Cidaas {
         $content = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new UnexpectedValueException(sprintf("Failed to parse JSON response: %s", json_last_error_msg()));
+            throw new \UnexpectedValueException(sprintf("Failed to parse JSON response: %s", json_last_error_msg()));
         }
 
         return $content;
