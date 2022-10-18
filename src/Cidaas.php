@@ -6,7 +6,9 @@ use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\RequestOptions;
+use LogicException;
 use Psr\Http\Message\ResponseInterface;
+use UnexpectedValueException;
 
 /**
  * Cidaas connector.
@@ -188,7 +190,7 @@ class Cidaas {
      * Performs a redirect to the hosted login page.
      * @param string $scope for login
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
-     * @throws \LogicException if no loginUrl has been set
+     * @throws LogicException if no loginUrl has been set
      */
     public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
         $loginUrl = $this->openid_config['authorization_endpoint'];
