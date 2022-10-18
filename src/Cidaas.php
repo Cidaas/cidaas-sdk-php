@@ -19,7 +19,7 @@ class Cidaas {
     private static string $requestIdUri = '/authz-srv/authrequest/authz/generate';
     private static string $getRegistrationSetupUri = '/registration-setup-srv/public/list';
     private static string $registerSdkUri = '/users-srv/register';
-    private static string $loginSdkUri = '/login-srv/login';
+    private static string $loginSdkUri = '/login-srv/login/sdk';
     private static string $changePasswordUri = '/users-srv/changepassword';
     private static string $updateProfileUriPrefix = '/users-srv/user/profile/';
     private static string $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
