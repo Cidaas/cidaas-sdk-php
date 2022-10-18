@@ -210,6 +210,7 @@ class Cidaas {
      * @throws LogicException if no loginUrl has been set
      */
     public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
+        $this->initClient();
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
