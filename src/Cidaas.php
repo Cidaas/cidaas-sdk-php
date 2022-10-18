@@ -522,7 +522,7 @@ class Cidaas {
     }
 
     private function validate($param, $name) {
-        if (!isset($param) || empty($param)) {
+        if (empty($param)) {
             throw new \InvalidArgumentException($name . ' is not specified');
         }
     }
