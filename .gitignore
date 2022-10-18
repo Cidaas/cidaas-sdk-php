@@ -6,4 +6,5 @@ composer.lock
 *.iml
 .phpunit.result.cache
 node_modules
+phpunit.xml
 
