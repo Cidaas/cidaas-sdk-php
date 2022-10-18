@@ -26,7 +26,7 @@ class Cidaas {
     private static string $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
     private static string $resetPasswordUri = '/users-srv/resetpassword/accept';
 
-    private $openid_config;
+    private array $openid_config;
     private string $baseUrl = "";
     private string $clientId = "";
     private string $clientSecret = "";
@@ -309,9 +309,8 @@ class Cidaas {
             throw new \InvalidArgumentException('invalid grant type');
         }
 
-        $url = $this->openid_config["token_endpoint"];
-
         $client = $this->createClient();
+        $url = $this->openid_config["token_endpoint"];
         $responsePromise = $client->requestAsync('POST', $url, ['form_params' => $params]);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
@@ -326,12 +325,12 @@ class Cidaas {
      * @return PromiseInterface promise with user profile or error
      */
     public function getUserProfile(string $accessToken, string $sub = ""): PromiseInterface {
+        $client = $this->createClient();
         $url = $this->openid_config["userinfo_endpoint"];
         if (!empty($sub)) {
             $url .= "/" . $sub;
         }
 
-        $client = $this->createClient();
         $responsePromise = $client->requestAsync('POST', $url, [
             "headers" => [
                 "Authorization" => "Bearer " . $accessToken,
@@ -508,13 +507,13 @@ class Cidaas {
      * @return PromiseInterface promise with success (redirect) or error message
      */
     public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface {
+        $client = $this->createClient();
         $url = $this->openid_config["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
 
         if (!empty($postLogoutUri)) {
             $url .= "&post_logout_redirect_uri=" . urlencode($postLogoutUri);
         }
 
-        $client = $this->createClient();
         return $client->requestAsync('POST', $url, ['allow_redirects' => false]);
     }
 
