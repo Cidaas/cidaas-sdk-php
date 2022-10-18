@@ -33,6 +33,8 @@ class Cidaas {
     private string $redirectUri = "";
     private HandlerStack $handler;
     private bool $debug = false;
+    /** @var bool has the init method already been called? */
+    private bool $init = false;
 
     /**
      * Cidaas constructor.
@@ -58,8 +60,23 @@ class Cidaas {
         }
         $this->debug = $debug;
 
-        $this->openid_config = $this->loadOpenIdConfig();
     }
+
+    /**
+     * loads the OpenID config from the server the first time the client is used.
+     *
+     * @return void
+     */
+    private function initClient()
+    {
+        if($this->init)
+        {
+            return;
+        }
+        $this->openid_config = $this->loadOpenIdConfig();
+        $this->init = true;
+    }
+
 
     /**
      * Retrieve the requestId for a given scope in order to start an oidc interaction.
@@ -500,15 +517,18 @@ class Cidaas {
         return $client->requestAsync('POST', $url, ['allow_redirects' => false]);
     }
 
-    private function createClient(): Client {
-        $client = null;
-        if (isset($this->handler)) {
-            $client = new Client(['handler' => $this->handler, 'debug' => $this->debug]);
-        } else {
-            $client = new Client(['debug' => $this->debug]);
-        }
+    private function createClient(): Client
+    {
+        $this->initClient();
+        return $this->__createClient();
+    }
 
-        return $client;
+    private function __createClient(): Client
+    {
+        if (isset($this->handler)) {
+            return new Client(['handler' => $this->handler, 'debug' => $this->debug]);
+        }
+        return new Client(['debug' => $this->debug]);
     }
 
     private function parseJson($content): array {
@@ -529,12 +549,10 @@ class Cidaas {
 
     private function loadOpenIdConfig(): array {
         $openid_configuration_url = $this->baseUrl . self::$well_known_uri;
-        $client = $this->createClient();
-        $openid_config = $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
+        $client = $this->__createClient();
+        return $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         })->wait();
-
-        return $openid_config;
     }
 }
