@@ -13,24 +13,24 @@ use Psr\Http\Message\ResponseInterface;
  * @package Cidaas\OAuth2\Client\Provider
  */
 class Cidaas {
-    private static $well_known_uri = "/.well-known/openid-configuration";
-    private static $requestIdUri = '/authz-srv/authrequest/authz/generate';
-    private static $getRegistrationSetupUri = '/registration-setup-srv/public/list';
-    private static $registerSdkUri = '/users-srv/register';
-    private static $loginSdkUri = '/login-srv/login';
-    private static $changePasswordUri = '/users-srv/changepassword';
-    private static $updateProfileUriPrefix = '/users-srv/user/profile/';
-    private static $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
-    private static $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
-    private static $resetPasswordUri = '/users-srv/resetpassword/accept';
+    private static string $well_known_uri = "/.well-known/openid-configuration";
+    private static string $requestIdUri = '/authz-srv/authrequest/authz/generate';
+    private static string $getRegistrationSetupUri = '/registration-setup-srv/public/list';
+    private static string $registerSdkUri = '/users-srv/register';
+    private static string $loginSdkUri = '/login-srv/login';
+    private static string $changePasswordUri = '/users-srv/changepassword';
+    private static string $updateProfileUriPrefix = '/users-srv/user/profile/';
+    private static string $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
+    private static string $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
+    private static string $resetPasswordUri = '/users-srv/resetpassword/accept';
 
     private $openid_config;
-    private $baseUrl = "";
-    private $clientId = "";
-    private $clientSecret = "";
-    private $redirectUri = "";
-    private $handler;
-    private $debug = false;
+    private string $baseUrl = "";
+    private string $clientId = "";
+    private string $clientSecret = "";
+    private string $redirectUri = "";
+    private HandlerStack $handler;
+    private bool $debug = false;
 
     /**
      * Cidaas constructor.
@@ -66,7 +66,7 @@ class Cidaas {
      * @param string $acceptLanguage for the language. defaults to "en-GB"
      * @return PromiseInterface promise with the requestId or error
      */
-    public function getRequestId($scope = 'openid', $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface {
+    public function getRequestId(string $scope = 'openid', string $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
@@ -186,7 +186,7 @@ class Cidaas {
 
     /**
      * Performs a redirect to the hosted login page.
-     * @param string scope for login
+     * @param string $scope for login
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      * @throws \LogicException if no loginUrl has been set
      */
@@ -257,7 +257,6 @@ class Cidaas {
      * @return PromiseInterface promise with access token or error
      */
     public function getAccessToken(string $grantType, string $code = '', string $refreshToken = ''): PromiseInterface {
-        $params = [];
         if ($grantType === GrantType::AuthorizationCode) {
             if (empty($code)) {
                 throw new \InvalidArgumentException('code must not be empty in authorization_code flow');
