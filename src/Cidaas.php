@@ -35,20 +35,20 @@ class Cidaas {
     /**
      * Cidaas constructor.
      * @param string $baseUrl of cidaas server
-     * @param string $cliendId of cidaas application
+     * @param string $clientId of cidaas application
      * @param string $clientSecret of cidaas application
      * @param string $redirectUri to redirect to after login
      * @param HandlerStack|null $handler (optional) for http requests
      * @param bool $debug (optional) to enable debugging
      */
-    public function __construct(string $baseUrl, string $cliendId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false) {
-        $this->validate($baseUrl, '$baseUrl');
-        $this->validate($cliendId, '$cliendId');
-        $this->validate($clientSecret, '$clientSecret');
-        $this->validate($redirectUri, '$redirectUri');
+    public function __construct(string $baseUrl, string $clientId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false) {
+        $this->validate($baseUrl, 'Base URL');
+        $this->validate($clientId, 'Client-ID');
+        $this->validate($clientSecret, 'Client-Secret');
+        $this->validate($redirectUri, 'Redirect URL');
 
         $this->baseUrl = rtrim($baseUrl, "/");
-        $this->clientId = $cliendId;
+        $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectUri = $redirectUri;
         if (isset($handler)) {
