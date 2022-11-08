@@ -14,7 +14,6 @@ final class LoginWithBrowserTest extends AbstractCidaasTestParent {
     }
 
     public function test_loginWithBrowser_withRequestId_redirectsToLoginPage() {
-        $this->mock->reset();
         $this->mock->append(new Response(302, ['location' => self::$LOGIN_URL]));
 
         $this->provider->loginWithBrowser();

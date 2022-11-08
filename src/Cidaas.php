@@ -6,49 +6,53 @@ use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Promise\PromiseInterface;
 use GuzzleHttp\RequestOptions;
+use LogicException;
 use Psr\Http\Message\ResponseInterface;
+use UnexpectedValueException;
 
 /**
  * Cidaas connector.
  * @package Cidaas\OAuth2\Client\Provider
  */
 class Cidaas {
-    private static $well_known_uri = "/.well-known/openid-configuration";
-    private static $requestIdUri = '/authz-srv/authrequest/authz/generate';
-    private static $getRegistrationSetupUri = '/registration-setup-srv/public/list';
-    private static $registerSdkUri = '/users-srv/register';
-    private static $loginSdkUri = '/login-srv/login/sdk';
-    private static $changePasswordUri = '/users-srv/changepassword';
-    private static $updateProfileUriPrefix = '/users-srv/user/profile/';
-    private static $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
-    private static $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
-    private static $resetPasswordUri = '/users-srv/resetpassword/accept';
+    private static string $well_known_uri = "/.well-known/openid-configuration";
+    private static string $requestIdUri = '/authz-srv/authrequest/authz/generate';
+    private static string $getRegistrationSetupUri = '/registration-setup-srv/public/list';
+    private static string $registerSdkUri = '/users-srv/register';
+    private static string $loginSdkUri = '/login-srv/login/sdk';
+    private static string $changePasswordUri = '/users-srv/changepassword';
+    private static string $updateProfileUriPrefix = '/users-srv/user/profile/';
+    private static string $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
+    private static string $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
+    private static string $resetPasswordUri = '/users-srv/resetpassword/accept';
 
-    private $openid_config;
-    private $baseUrl = "";
-    private $clientId = "";
-    private $clientSecret = "";
-    private $redirectUri = "";
-    private $handler;
-    private $debug = false;
+    private array $openid_config;
+    private string $baseUrl = "";
+    private string $clientId = "";
+    private string $clientSecret = "";
+    private string $redirectUri = "";
+    private HandlerStack $handler;
+    private bool $debug = false;
+    /** @var bool has the init method already been called? */
+    private bool $init = false;
 
     /**
      * Cidaas constructor.
      * @param string $baseUrl of cidaas server
-     * @param string $cliendId of cidaas application
+     * @param string $clientId of cidaas application
      * @param string $clientSecret of cidaas application
      * @param string $redirectUri to redirect to after login
      * @param HandlerStack|null $handler (optional) for http requests
      * @param bool $debug (optional) to enable debugging
      */
-    public function __construct(string $baseUrl, string $cliendId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false) {
-        $this->validate($baseUrl, '$baseUrl');
-        $this->validate($cliendId, '$cliendId');
-        $this->validate($clientSecret, '$clientSecret');
-        $this->validate($redirectUri, '$redirectUri');
+    public function __construct(string $baseUrl, string $clientId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false) {
+        $this->validate($baseUrl, 'Base URL');
+        $this->validate($clientId, 'Client-ID');
+        $this->validate($clientSecret, 'Client-Secret');
+        $this->validate($redirectUri, 'Redirect URL');
 
         $this->baseUrl = rtrim($baseUrl, "/");
-        $this->clientId = $cliendId;
+        $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
         $this->redirectUri = $redirectUri;
         if (isset($handler)) {
@@ -56,8 +60,23 @@ class Cidaas {
         }
         $this->debug = $debug;
 
-        $this->openid_config = $this->loadOpenIdConfig();
     }
+
+    /**
+     * loads the OpenID config from the server the first time the client is used.
+     *
+     * @return void
+     */
+    private function initClient()
+    {
+        if($this->init)
+        {
+            return;
+        }
+        $this->openid_config = $this->loadOpenIdConfig();
+        $this->init = true;
+    }
+
 
     /**
      * Retrieve the requestId for a given scope in order to start an oidc interaction.
@@ -66,7 +85,7 @@ class Cidaas {
      * @param string $acceptLanguage for the language. defaults to "en-GB"
      * @return PromiseInterface promise with the requestId or error
      */
-    public function getRequestId($scope = 'openid', $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface {
+    public function getRequestId(string $scope = 'openid', string $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface {
         $client = $this->createClient();
 
         $params = [
@@ -186,11 +205,12 @@ class Cidaas {
 
     /**
      * Performs a redirect to the hosted login page.
-     * @param string scope for login
+     * @param string $scope for login
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
-     * @throws \LogicException if no loginUrl has been set
+     * @throws LogicException if no loginUrl has been set
      */
     public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
+        $this->initClient();
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
@@ -257,7 +277,6 @@ class Cidaas {
      * @return PromiseInterface promise with access token or error
      */
     public function getAccessToken(string $grantType, string $code = '', string $refreshToken = ''): PromiseInterface {
-        $params = [];
         if ($grantType === GrantType::AuthorizationCode) {
             if (empty($code)) {
                 throw new \InvalidArgumentException('code must not be empty in authorization_code flow');
@@ -290,9 +309,8 @@ class Cidaas {
             throw new \InvalidArgumentException('invalid grant type');
         }
 
-        $url = $this->openid_config["token_endpoint"];
-
         $client = $this->createClient();
+        $url = $this->openid_config["token_endpoint"];
         $responsePromise = $client->requestAsync('POST', $url, ['form_params' => $params]);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
@@ -307,12 +325,12 @@ class Cidaas {
      * @return PromiseInterface promise with user profile or error
      */
     public function getUserProfile(string $accessToken, string $sub = ""): PromiseInterface {
+        $client = $this->createClient();
         $url = $this->openid_config["userinfo_endpoint"];
         if (!empty($sub)) {
             $url .= "/" . $sub;
         }
 
-        $client = $this->createClient();
         $responsePromise = $client->requestAsync('POST', $url, [
             "headers" => [
                 "Authorization" => "Bearer " . $accessToken,
@@ -489,51 +507,52 @@ class Cidaas {
      * @return PromiseInterface promise with success (redirect) or error message
      */
     public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface {
+        $client = $this->createClient();
         $url = $this->openid_config["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
 
         if (!empty($postLogoutUri)) {
             $url .= "&post_logout_redirect_uri=" . urlencode($postLogoutUri);
         }
 
-        $client = $this->createClient();
         return $client->requestAsync('POST', $url, ['allow_redirects' => false]);
     }
 
-    private function createClient(): Client {
-        $client = null;
-        if (isset($this->handler)) {
-            $client = new Client(['handler' => $this->handler, 'debug' => $this->debug]);
-        } else {
-            $client = new Client(['debug' => $this->debug]);
-        }
+    private function createClient(): Client
+    {
+        $this->initClient();
+        return $this->__createClient();
+    }
 
-        return $client;
+    private function __createClient(): Client
+    {
+        if (isset($this->handler)) {
+            return new Client(['handler' => $this->handler, 'debug' => $this->debug]);
+        }
+        return new Client(['debug' => $this->debug]);
     }
 
     private function parseJson($content): array {
         $content = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \UnexpectedValueException(sprintf("Failed to parse JSON response: %s", json_last_error_msg()));
+            throw new UnexpectedValueException(sprintf("Failed to parse JSON response: %s", json_last_error_msg()));
         }
 
         return $content;
     }
 
     private function validate($param, $name) {
-        if (!isset($param) || empty($param)) {
+        if (empty($param)) {
             throw new \InvalidArgumentException($name . ' is not specified');
         }
     }
 
     private function loadOpenIdConfig(): array {
         $openid_configuration_url = $this->baseUrl . self::$well_known_uri;
-        $client = $this->createClient();
-        $openid_config = $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
+        $client = $this->__createClient();
+        return $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
             $body = $response->getBody();
             return $this->parseJson($body);
         })->wait();
-
-        return $openid_config;
     }
 }
