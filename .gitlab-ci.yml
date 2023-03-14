@@ -1,6 +1,6 @@
 include:
   - project: "widas/codequality"
-    ref: fix/php-8-ci-setup
+    ref: master
     file: "ci_templates/php8.gitlab-ci.yml"
 
 stages:
