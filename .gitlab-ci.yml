@@ -16,10 +16,13 @@ github_sync:
     - git config --global --add safe.directory $PWD
     - git config --global user.name $GITLAB_USER_NAME
     - git config --global user.email $GITLAB_USER_EMAIL
-    - git checkout fix/github-sync
+    - git checkout master
     - git remote -v >> temp
     - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/cidaas-sdk-php.git;fi
     - rm -rf Dockerfile .gitlab-ci.yml scripts temp docker docker-compose.yml run-php-docker.sh Jenkinsfile
     - git add . && git commit -m "fix():cleanup" && git status
     - ls
-    # - git push https://$USERNAME:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:fix/github-sync -f
+    - git push https://$USERNAME:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
+  only:
+    - master
+  when: manual
