@@ -19,10 +19,14 @@ github_sync:
     - git checkout master
     - git remote -v >> temp
     - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/cidaas-sdk-php.git;fi
-    - rm -rf Dockerfile .gitlab-ci.yml scripts temp docker docker-compose.yml run-php-docker.sh Jenkinsfile
-    - git add . && git commit -m "fix():cleanup" && git status
-    - ls
-    - git push https://$USERNAME:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
+    - |
+      FILES="Dockerfile .gitlab-ci.yml scripts temp docker docker-compose.yml run-php-docker.sh Jenkinsfile"
+      for VARIABLE in $FILES
+      do
+        if grep -Fxq $VARIABLE .gitignore;then echo "do nothing";else echo "$VARIABLE" >> .gitignore;fi
+      done
+    - git add . && git commit -m "fix():update gitignore" && git status
+    - git push https://$USER:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
   only:
     - master
   when: manual
