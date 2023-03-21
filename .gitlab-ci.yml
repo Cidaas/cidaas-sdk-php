@@ -1,9 +1,9 @@
 include:
-  - project: 'widas/codequality'
+  - project: "widas/codequality"
     ref: master
-    file: 'ci_templates/php7-4.gitlab-ci.yml'
+    file: "ci_templates/php8.gitlab-ci.yml"
 
 stages:
-    - test
-    - badges
-    - deploy
+  - test
+  - badges
+  - deploy
