@@ -4,10 +4,10 @@ include:
     file: "ci_templates/php8.gitlab-ci.yml"
 
 stages:
-    - test
-    - badges
-    - deploy
-    - publish
+  - test
+  - badges
+  - deploy
+  - publish
 
 github_sync:
   stage: publish
