@@ -20,13 +20,25 @@ github_sync:
     - git remote -v >> temp
     - if grep -q github temp;then echo 'remote github already exists';else git remote add github https://github.com/Cidaas/cidaas-sdk-php.git;fi
     - |
-      OBJECTS="Dockerfile .gitlab-ci.yml scripts temp docker docker-compose.yml run-php-docker.sh Jenkinsfile"
-      for File in $OBJECTS
+      OBJECTS="Dockerfile .gitlab-ci.yml scripts temp docker docker-compose.yml run-php-docker.sh Jenkinsfile public codeclimate.html gl-code-quality-report.json"
+      ISFILECHANGED=false
+      for FILE in $OBJECTS
       do
-        if grep -Fxq $File .gitignore;then echo "do nothing";else echo "$File" >> .gitignore;fi
+        if grep -Fxq $FILE .gitignore;
+        then echo "do nothing";
+        else echo "$FILE" >> .gitignore;
+        ISFILECHANGED=true
+        fi
       done
-    - git add . && git commit -m "fix():update gitignore" && git status
-    - git push https://$USER:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
+      if $ISFILECHANGED;
+      then
+        git add .gitignore;
+        git commit -m "fix(): cleanup";
+        git rm -r --cached .;
+        git add .;
+        git commit -m "fix(): gitignore update"
+      fi
+- git push https://$USER:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
   only:
     - master
   when: manual
