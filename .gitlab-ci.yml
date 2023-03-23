@@ -38,7 +38,7 @@ github_sync:
         git add .;
         git commit -m "fix(): gitignore update"
       fi
-- git push https://$USER:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
+    - git push https://$USER:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
   only:
     - master
   when: manual
