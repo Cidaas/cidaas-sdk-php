@@ -26,7 +26,6 @@ github_sync:
         if grep -Fxq $File .gitignore;then echo "do nothing";else echo "$File" >> .gitignore;fi
       done
     - git add . && git commit -m "fix():update gitignore" && git status
-    - ls
     - git push https://$USER:$PAT@github.com/Cidaas/cidaas-sdk-php.git HEAD:master -f
   only:
     - master
