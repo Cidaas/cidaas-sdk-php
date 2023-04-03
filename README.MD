@@ -1,6 +1,12 @@
 # Cidaas SDK for php
 
 
+#### Requirements
+
+Make sure you have installed all of the following prerequisites on your development machine:
+PHP version 7.0.0 or higher
+Download and install the composer installer to the current directory.
+
 ## Installation
 
 In order to use this sdk, you need to perform the following steps:
