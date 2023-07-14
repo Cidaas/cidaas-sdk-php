@@ -18,6 +18,10 @@ codecoverage:
     - curl -sS https://getcomposer.org/installer | php
     - php composer.phar install
 
+create_codequality_badges:
+  rules:
+    - when: never
+
 github_sync:
   stage: publish
   image: bitnami/git
