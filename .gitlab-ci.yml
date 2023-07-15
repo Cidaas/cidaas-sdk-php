@@ -22,6 +22,10 @@ create_codequality_badges:
   rules:
     - when: never
 
+pages:
+ before_script:
+   - mkdir public
+
 github_sync:
   stage: publish
   image: bitnami/git
