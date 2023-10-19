@@ -93,7 +93,7 @@ class Cidaas {
             'redirect_uri' => $this->redirectUri,
             "response_type" => $responseType,
             "scope" => $scope,
-            "nonce" => time()
+            "nonce" => (string)time()
         ];
         $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
         $options = [
