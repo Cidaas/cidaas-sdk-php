@@ -25,6 +25,7 @@ class Cidaas {
     private static string $initiateResetPasswordUri = '/users-srv/resetpassword/initiate';
     private static string $handleResetPasswordUri = '/users-srv/resetpassword/validatecode';
     private static string $resetPasswordUri = '/users-srv/resetpassword/accept';
+    private static string $tokenUri = '/token-srv/token';
 
     private array $openid_config;
     private string $baseUrl = "";
@@ -105,7 +106,6 @@ class Cidaas {
             ]
         ];
         $url = $this->baseUrl . self::$requestIdUri;
-
         $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
@@ -180,7 +180,6 @@ class Cidaas {
      */
     public function loginWithCredentials(string $username, string $username_type, string $password, string $requestId): PromiseInterface {
         $client = $this->createClient();
-
         $url = $this->baseUrl . self::$loginSdkUri;
         $params = [
             'username' => $username,
@@ -210,19 +209,37 @@ class Cidaas {
      * @throws LogicException if no loginUrl has been set
      */
     public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
-        $this->initClient();
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
         $loginUrl .= '&scope=' . urlencode($scope);
         $loginUrl .= '&redirect_uri=' . $this->redirectUri;
         $loginUrl .= '&nonce=' . time();
-
+        $loginUrl .= '&view_type=' . "login";
         foreach ($queryParameters as $key => $value) {
             $loginUrl .= '&' . $key . '=' . $value;
         }
-
         header('Location: ' . $loginUrl);
+    }
+
+    /**
+     * Performs a redirect to the hosted registration page.
+     * @param string $scope for registration
+     * @param array $queryParameters (optional) optionally adds more query parameters to the url.
+     */
+    public function registerWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
+        $this->initClient();
+        $registerUrl = $this->openid_config['authorization_endpoint'];
+        $registerUrl .= '?client_id=' . $this->clientId;
+        $registerUrl .= '&response_type=code';
+        $registerUrl .= '&scope=' . urlencode($scope);
+        $registerUrl .= '&redirect_uri=' . $this->redirectUri;
+        $registerUrl .= '&nonce=' . time();
+        $registerUrl .= '&view_type=' . "register";
+        foreach ($queryParameters as $key => $value) {
+            $registerUrl .= '&' . $key . '=' . $value;
+        }
+        header('Location: ' . $registerUrl);
     }
 
     /**
@@ -310,7 +327,7 @@ class Cidaas {
         }
 
         $client = $this->createClient();
-        $url = $this->openid_config["token_endpoint"];
+        $url = $this->baseUrl . self::$tokenUri;
         $responsePromise = $client->requestAsync('POST', $url, ['form_params' => $params]);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
@@ -339,7 +356,6 @@ class Cidaas {
         ]);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
-
             return $this->parseJson($body);
         });
     }
@@ -509,12 +525,202 @@ class Cidaas {
     public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface {
         $client = $this->createClient();
         $url = $this->openid_config["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
-
         if (!empty($postLogoutUri)) {
             $url .= "&post_logout_redirect_uri=" . urlencode($postLogoutUri);
         }
 
         return $client->requestAsync('POST', $url, ['allow_redirects' => false]);
+    }
+
+    /**
+     * Performs a redirect to the login page of the social provider
+     * @param string $provider_name name of the social provider. e.g: google
+     * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
+     * @param array $queryParameters (optional) optionally adds more query parameters to the url.
+     */
+    public function loginWithSocial(string $provider_name, string $request_id, array $queryParameters = array()) {
+        $url = $this->baseUrl. "/login-srv/social/login/". strtolower($provider_name) . "/" . $request_id;
+        foreach ($queryParameters as $key => $value) {
+            $registerUrl .= '&' . $key . '=' . $value;
+        }
+        header('Location: ' . $url);
+    }
+
+     /**
+     * Performs a redirect to the register page of the social provider
+     * @param string $provider_name name of the social provider. e.g: google
+     * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
+     * @param array $queryParameters (optional) optionally adds more query parameters to the url.
+     */
+    public function registerWithSocial($provider_name, $request_id, array $queryParameters = array()) {
+        $url = $this->baseUrl. "/login-srv/social/register/". strtolower($provider_name) . "/" . $request_id;
+        foreach ($queryParameters as $key => $value) {
+            $registerUrl .= '&' . $key . '=' . $value;
+        }
+        header('Location: ' . $url);
+    }
+
+     /**
+     * Initiates multi factore authentication
+     * @param string $type the type of multi factor. e.g: email, sms
+     * @param array $params an associate array with the params that api accepts as request body
+     */
+    public function intiateMFA($type, $params) {
+        $url = $this->baseUrl."/verification-srv/v2/authenticate/initiate/". strtolower($type);
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Validates multi factore authentication
+     * @param string $exchange_id the exchange_id received in the response body while initiating mfa
+     * @param string $sub the sub received in the response body while initiating mfa
+     * @param string $pass_code the verification code recieved to the prefered mfa type
+     * @param string $type the type of multi factor. e.g: email, sms
+     */
+    public function authenticateMFA(string $exchange_id, string $sub, string $pass_code, string $type) {
+        $url = $this->baseUrl . "/verification-srv/v2/authenticate/authenticate/". strtolower($type);
+        $allowed_types = ["EMAIL", "SMS"];
+        if (!in_array(strtoupper($type), $allowed_types)) {
+            throw new \InvalidArgumentException('invalid mfa type');
+        }
+        $params = [
+            'exchange_id' => $exchange_id,
+            'sub' => $sub,
+            'type' => strtoupper($type),
+            'pass_code' => $pass_code
+        ];
+       return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Initiates account verification
+     * @param array $params an associate array with the params that api accepts as request body
+    */
+    public function initiateAccountVerification($params) {
+        $url = $this->baseUrl . "/verification-srv/account/initiate";
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Verify account
+     * @param string $accvid accvid recieved when initiating the account verification
+     * @param array $code code received to the users account to verify after registration
+    */
+    public function verifyAccount(string $accvid, string $code) {
+        $url = $this->baseUrl . "/verification-srv/account/verify";
+        $params = [
+            'accvid' => $accvid,
+            'code' => $code
+        ];
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Initiates progressive registration for missing required registration fields after an account is created in cidaas system
+     * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
+     * @param string $trackId the track_id recieved of the oidc session
+     * @param string $acceptLanguage the locale
+     * @param array $params an associate array with the params that api accepts as request body
+    */
+    public function progressiveRegistration($requestId, $trackId, $params, $acceptLanguage = 'en-US') {
+        $url = $this->baseUrl . "/login-srv/progressive/update/user";
+        $headers = [
+            'Content-type' => 'application/json',
+            'requestId' => $requestId,
+            'trackId' => $trackId,
+            'acceptlanguage' => $acceptlanguage
+        ];
+        return $this->makeRequest($params, $url, $headers);
+    }
+
+    /**
+     * Provides the details of an consent
+     * @param string $consent_id the id of the consent
+     * @param string $consent_version_id the version of the consent
+     * @param string $sub the sub
+    */
+    public function getConsentDetails($consent_id, $consent_version_id, $sub){
+        $url = $this->baseUrl . "/consent-management-srv/v2/consent/usage/public/info";
+        $params = [
+            'consent_id' => $consent_id,
+            'consent_version_id' => $consent_version_id,
+            'sub' => $sub
+        ];
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * To accept a consent
+     * @param array $params an associate array with the params that api accepts as request body
+    */
+    public function acceptConsent($params){
+        $url = $this->baseUrl . "/consent-management-srv/v2/consent/usage/accept";
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Get the list of the mfa configured for an user. One of email,mobile_number,username or sub must be provided
+     * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
+     * @param string $email (optional) the email of the user
+     * @param string $mobile_number (optional) the mobile number of the user
+     * @param string $username (optional) the username of the user
+     * @param string $sub (optional) the uniqe identified of the user
+    */
+    public function getMFAList(string $request_id, string $email = '', string $mobile_number = '', string $username = '', string $sub = '') {
+        $url = $this->baseUrl . "/verification-srv/v2/setup/public/configured/list";
+        $params = [
+            'request_id' => $request_id,
+            'sub' => $sub,
+            'email' => $email,
+            'mobile_number' => $mobile_number,
+            'username' => $username
+        ];
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Perform login without password. E.g: totp, backupcode
+     * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
+     * @param string $email the email of the user
+     * @param string $medium_id the medium id of the preferred type. E.g: for type totp the medium id is "TOTP"
+     * @param string $type the preferred type of passwordless login. E.g: email, totp, push etc.
+    */
+    public function initiatePasswordlessLogin(string $request_id, string $type, string $email, string $medium_id) {
+        $allowed_types = ["email", "totp", "push", "backup_code", "password"];
+        if (!in_array(strtoupper($type), $allowed_types)) {
+            throw new \InvalidArgumentException('invalid type');
+        }
+        $url = $this->baseUrl. "/verification-srv/v2/authenticate/initiate/". strtolower($type);
+        $params = [
+            'usage_type' => "PASSWORDLESS_AUTHENTICATION",
+            'request_id' => $request_id,
+            'type' => $type,
+            'email' => $email,
+            'medium_id' => $medium_id
+        ];
+        return $this->makeRequest($params, $url);
+    }
+
+    /**
+     * Perform login without password. E.g: totp, backupcode
+     * @param string $requestId the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
+     * @param string $pass_code the verification code to validate the login flow
+     * @param string $exchange_id the exchage id receieved in the response payload when password login was initiated
+     * @param string $type the preferred type of passwordless login. E.g: email, totp, push etc.
+    */
+    public function verifyPasswordlessLogin(string $type, string $exchange_id, string $pass_code, string $requestId) {
+        $allowed_types = ["email", "totp", "push", "backup_code", "password"];
+        if (!in_array(strtoupper($type), $allowed_types)) {
+            throw new \InvalidArgumentException('invalid type');
+        }
+        $url = $this->baseUrl. "/verification-srv/v2/authenticate/authenticate/". strtolower($type);
+        $params = [
+            'exchange_id' => $exchange_id,
+            'pass_code' => $pass_code,
+            'type' => $type,
+            'requestId' => $requestId,
+        ];
+        return $this->makeRequest($params, $url);
     }
 
     private function createClient(): Client
@@ -554,5 +760,19 @@ class Cidaas {
             $body = $response->getBody();
             return $this->parseJson($body);
         })->wait();
+    }
+
+    private function makeRequest($params, $url, $headers = ['Content-Type' => 'application/json']) {
+        $client = $this->createClient();
+        $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
+        $options = [
+            RequestOptions::BODY => $postBody,
+            RequestOptions::HEADERS => $headers
+        ];
+        $responsePromise = $client->requestAsync('POST', $url, $options);
+        return $responsePromise->then(function (ResponseInterface $response) {
+            $body = $response->getBody();
+            return $this->parseJson($body);
+        });
     }
 }

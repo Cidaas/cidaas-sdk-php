@@ -153,6 +153,374 @@ In order to perform a logout, you need an access token. Using this token, you ca
 ?>
 ```
 
+### Integration of hosted registration page
+
+In order to integrate a hosted register page, you might just implement a simple button which itself calls the register method when clicked. The function accepts the below parameters
+
+| Param Name | Type | is optional| Default value | Description |
+|------ | ---- | ----------- | --------- | ---------- |
+| scope | string | true | 'openid profile offline_access' | scope of the registered user |
+| queryParameters | associative array | true | [] | additional query params to add to the url. eg: ["local" => "en-US"] |
+
+```php
+<?php
+    $provider->registerWithBrowser();
+?>
+```
+After successful registration, the browser is redirected to the login page for you to login with the registered details. The reirection may sometimes differ based on the configuration of the client.
+
+### Integration of social login page
+
+To integrate social login redirection, you might just implement a simple button which itself calls the login method when clicked. In order to access the login method, you need to retrieve a requestId first. The function requires the provider name(e.g: google, facebbok) and the requestId as functional parameter and optinally more query params can be added to the request url.
+
+```php
+<?php
+    $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $provider->loginWithSocial('google', $requestId);
+    })
+?>
+```
+This will redirect to the login page of the social provider. After successful login, the browser is redirected to your selected redirectUri (see Prerequisites).
+
+### Integration of social registration page
+
+To integrate social registration redirection, you might just implement a simple button which itself calls the register method when clicked. In order to access the register method, you need to retrieve a requestId first. The function requires the provider name(e.g: google, facebbok) and  the requestId as functional parameter and optionally more query params can be added to the request url.
+
+```php
+<?php
+    $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $provider->registerWithSocial('google', $requestId);
+    })
+?>
+```
+This will redirect to the register page of the social provider. After successful registration, you can call the function loginWithSocial to start loging in to your cidaas client with the social provider.
+
+### Initiate multi factor authentication
+
+To initiate multi factor authentication use the function intiateMFA. You need to retrieve a requestId first. Allowed types are mentioned in the list below
+```
+    EMAIL
+    SMS
+    IVR
+    BACKUPCODE
+    SECURITY_QUESTION
+    TOTP
+    PATTERN
+    PUSH
+    FACE
+    TOUCHID
+    VOICE
+    FIDOU2F
+    FIDO2
+    SEALONE
+    PASSWORD
+```
+
+```php
+<?php
+    $resp = $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $params = [
+            "email" => 'account@cidaas.de'
+            "request_id" => $requestId,
+            "usage_type" => "MULTIFACTOR_AUTHENTICATION"
+        ]
+        $resp = $provider->intiateMFA('EMAIL', $params)->wait();
+    })
+?>
+```
+
+The api used in the function returns a response like shown below. You will require the exchange_id and sub from the response in order to complete the authentication process by calling the function authenticateMFA.
+
+```json
+{
+	"success": true,
+	"status": 200,
+	"data": {
+		"exchange_id": {
+			"exchange_id": "a64782cd-d136-4fc3-a879-3afb4feb7453",
+			"expires_at": "2023-11-20T07:37:01.439Z",
+			"_id": "0d69a2b7-4a2c-4776-97bf-09da5d243e02",
+			"createdTime": "2023-11-20T07:07:01.440Z",
+			"updatedTime": "2023-11-20T07:07:01.440Z",
+			"__ref": "58dfddbc8e3777f5:2a4e7a910c19bc67:58dfddbc8e3777f5:0",
+			"id": "0d69a2b7-4a2c-4776-97bf-09da5d243e02"
+		},
+		"medium_text": "account@cidaas.de",
+		"sub": "3e851ef6-d6f4-41c3-8ff0-8277279c0fbd",
+		"status_id": "398ff79e-af29-4889-8377-f82dbf46ed63"
+	}
+}
+```
+
+### Authenticate multi factor
+
+To authenticate multi factor you must first initiate the authentication process with the help of the function intiateMFA. You will be shared a passcode/verification code based on the type of authentication you prefer in the initiaition process. The types allowed for the authentication process are mentioned in the above section.
+
+```php
+<?php
+    $resp = $provider->authenticateMFA('a64782cd-d136-4fc3-a879-3afb4feb7453', '3e851ef6-d6f4-41c3-8ff0-8277279c0fbd', '123456', 'EMAIL')->wait();
+?>
+```
+
+The api used in the function returns a response like shown below. After successful authentication you may proceed with your custom implementation. For any failure the attibute "success" in the response payload will have value false.
+
+```json
+{
+	"success": true,
+	"status": 200,
+	"data": {
+		"exchange_id": {
+			"exchange_id": "a64782cd-d136-4fc3-a879-3afb4feb7453",
+			"expires_at": "2023-11-20T07:37:01.439Z",
+			"_id": "0d69a2b7-4a2c-4776-97bf-09da5d243e02",
+			"createdTime": "2023-11-20T07:07:01.440Z",
+			"updatedTime": "2023-11-20T07:07:01.440Z",
+			"__ref": "58dfddbc8e3777f5:2a4e7a910c19bc67:58dfddbc8e3777f5:0",
+			"id": "0d69a2b7-4a2c-4776-97bf-09da5d243e02"
+		},
+		"medium_text": "account@cidaas.de",
+		"sub": "3e851ef6-d6f4-41c3-8ff0-8277279c0fbd",
+		"status_id": "398ff79e-af29-4889-8377-f82dbf46ed63"
+	}
+}
+```
+
+### Initiate account verification
+
+To initiate account verification use the function initiateAccountVerification. Account verification is done for newly created user account is not verified. A sample of the function parameter $params is shown below
+
+* Allowed values for verificationMedium
+
+```
+    email
+    sms
+    ivr
+```
+
+* Allowed values for verificationMedium
+
+```
+    CODE
+    LINK
+```
+
+```php
+<?php
+    $params = [
+        "response_type": "token",
+        "verificationMedium": "email",
+        "processingType": "code",
+        "client_id": "103a3f9c-1a2d-4e47-940k-bad7f19d9604",
+        "redirect_uri": "https://test.cidaas.com/user-profile/editprofile",
+        "email": "account@cidaas.de"
+    ]
+    $provider->initiateAccountVerification($params)->wait();
+?>
+```
+
+Once initiated successfully a passcode or a link will be sent to the preferred verificationMedium to verify your account
+
+### Verify account verificationMedium CODE
+
+To complete account verification use the function verifyAccount. You will need the accvid which you will receive at the time of account verification initiation process.
+
+```php
+<?php
+    $resp = $provider->verifyAccount("103a3f9c-1a2d-4e47-940k-bad7f19d9604", "123456")->wait();
+?>
+```
+
+The api used in the function returns a response like shown below. For failed verification the value of the attribute success will be false. After successful verification you may proceed with your custom implementation.
+
+```json
+{
+    "success": true,
+    "status": 200
+}
+```
+
+### Perform progressive registration
+
+Initiates progressive registration for missing required registration fields after an account is created in cidaas system. Below are the fields which can be updated in the process of progessive registration. All these fields need to passed in the function parameter $params
+
+| field name       | type         |
+|------------------|--------------|
+| userStatus| string |
+| user_status| string |
+| user_status_reason| string |
+| username| string |
+| sub| string |
+| given_name| string |
+| family_name| string |
+| middle_name| string |
+| nickname| string |
+| originalProviderUserId| string[] |
+| email| string |
+| email_verified| boolean |
+| mobile_number| string |
+| mobile_number_verified| boolean |
+| phone_number| string |
+| phone_number_verified| boolean |
+| profile| string |
+| picture| string |
+| website| string |
+| gender| string |
+| zoneinfo| string |
+| locale| string |
+| birthdate| Date | null |
+| address| IAddressEntity |
+| customFields| any |
+| identityCustomFields| any |
+| password| string |
+| provider| string |
+| providerUserId| string |
+| identityId| string |
+| mfa_enabled| boolean |
+| roles| string[] |
+| userGroups| IUserGroupMap[] |
+| groups| IUserGroupMap[] |
+| rawJSON| string |
+| trackId| string |
+| need_reset_password| boolean |
+
+The type IAddressEntity and IUserGroupMap contains the below fields
+
+#### IAddressEntity
+
+| field name       | type         |
+|------------------|--------------|
+| formatted| string |
+| street_address| string |
+| locality| string |
+| region| string |
+| postal_code| string |
+| country| string |
+
+#### IUserGroupMap
+
+| field name       | type         |
+|------------------|--------------|
+| sub| string |
+| groupId| string |
+| roles| string[] |
+| appendRole| boolean |
+
+```php
+<?php
+    $params = [
+        "given_name": "Firstname",
+        "username": "test_username",
+        "family_name": "Lastname",
+        "mobile_number": "7865637869"
+    ]
+    $resp = $provider->progressiveRegistration("103a3f9c-1a2d-4e47-940k-bad7f19d9604", "203a3f9c-1a2d-4e47-940k-bad7f19d9604", $params)->wait();
+?>
+```
+
+### Get consent details
+
+To get the consent details of a client use the function getConsentDetails. The function accepts 3 parameters consent_id, consent_version_id and sub.
+
+```php
+<?php
+    $resp = $provider->getConsentDetails("103a3f9c-1a2d-4e47-940k-bad7f19d9604", "1",  "503a3f9c-1a2d-4e47-940k-bad7f19d960")->wait();
+?>
+```
+
+### Accept consent details
+
+To accept consent by sub use the function acceptConsent. The function accepts a parameter of type array. Below are the fields that need to be passed in the array. A sample array is shown in the example below
+
+| field | type |
+|------ | ---- |
+| client_id | string |
+| consent_id | string |
+| consent_version_id | string |
+| sub | string |
+| scopes | string[] |
+| url | string |
+| matcher | any |
+| field_key | string |
+| accepted_fields | string[] |
+| accepted_by | string |
+| skipped | boolean |
+| action_type | string |
+| action_id | string |
+| q | string |
+| revoked | boolean |
+
+```php
+<?php
+     $params = [
+        "client_id": "1234567",
+        "consent_id": "1234567",
+        "consent_version_id": "1",
+        "sub": "1234567",
+        "url" : "https://cidaas.de/accept-consent"
+    ]
+    $resp = $provider->acceptConsent($params)->wait();
+?>
+```
+
+### Get mfa list
+
+Get the list of the mfa configured for an user use the function getMFAList. In order to get the list, you need to retrieve a requestId first. The function additionally accepts one of the below parameters
+
+```
+email
+mobile_number
+username
+sub
+```;
+
+```php
+<?php
+    $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $resp = $provider->getMFAList($requestId, "account@cidaas.de")->wait();
+    })
+?>
+```
+
+### Initiate passwordless login
+
+To initate passwordless login use the function initiatePasswordlessLogin. In order to initiate the process, you need to retrieve a requestId first. The function additionally accepts the below params
+
+| field | type |
+|------ | ---- |
+| request_id | string |
+| type | string |
+| email | string |
+| sub | string |
+
+```php
+<?php
+    $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $resp = $provider->initiatePasswordlessLogin($requestId, "email", 'account@cidaas.de', '1234567')->wait();
+    })
+?>
+```
+
+### Verify passwordless login
+
+To verify passwordless login after initiating the process use the function verifyPasswordlessLogin. The function additionally accepts the below params
+
+| field | type | description |
+|------ | ---- | ----------- |
+| type | string | preferred type of passwordless login. eg: email, totp |
+| exchange_id | string | exchange_id received in the response body while initiating the passwordless login |
+| pass_code | string | the passcode generated in the preferred type. eg: in case of email you will receive a passcode you the email provided |
+| requestId | string | use the same requestId that is being used while initiating the passwordless login |
+
+```php
+<?php
+
+    $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $resp1 = $provider->initiatePasswordlessLogin($requestId, "email", 'account@cidaas.de', '1234567')->wait();
+        $resp2 = $provider->verifyPasswordlessLogin("email",$resp1->exchange_id, '123456', $requestId)->wait();
+    })
+?>
+```
+
 ### Unit testing
 There are different ways of integrating php unit tests. Besides mocking the `Cidaas` class, you may also add a mock handler to the constructor for low level tests. 
 ```php
