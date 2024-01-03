@@ -1,3 +1,11 @@
+## [1.3.1](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.0...v1.3.1) (2024-01-03)
+
+
+### Bug Fixes
+
+* add pkce feature ([4d8f231](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/4d8f231848f8a1822fa82fda09b6f53361536f58))
+* update readme with pkce flow ([d69ab70](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/d69ab70283c6e52e6b8fc2e3c5dedff3dc7d782f))
+
 # [1.3.0](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.2.2...v1.3.0) (2023-11-28)
 
 
