@@ -208,7 +208,8 @@ class Cidaas {
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      * @throws LogicException if no loginUrl has been set
      */
-    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
+    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array(), bool $pkceEnabled) {
+        $client = $this->createClient();
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
         $loginUrl .= '&response_type=code';
@@ -216,12 +217,19 @@ class Cidaas {
         $loginUrl .= '&redirect_uri=' . $this->redirectUri;
         $loginUrl .= '&nonce=' . time();
         $loginUrl .= '&view_type=' . "login";
+
+        if ($pkceEnabled) {
+            $code_verifier = bin2hex(random_bytes(64));
+            $str = strtr(base64_encode(hash('sha256', $code_verifier, true)), '+/', '-_');
+            $code_challenge = rtrim($str, '=');
+            $loginUrl .= '&code_challenge=' . $code_challenge . '&code_challenge_method=S256';
+        }
+
         foreach ($queryParameters as $key => $value) {
             $loginUrl .= '&' . $key . '=' . $value;
         }
         header('Location: ' . $loginUrl);
     }
-
     /**
      * Performs a redirect to the hosted registration page.
      * @param string $scope for registration
@@ -293,7 +301,7 @@ class Cidaas {
      * @param string $refreshToken only required for {@see GrantType::$RefreshToken}
      * @return PromiseInterface promise with access token or error
      */
-    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = ''): PromiseInterface {
+    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = '', bool $pkceEnabled): PromiseInterface {
         if ($grantType === GrantType::AuthorizationCode) {
             if (empty($code)) {
                 throw new \InvalidArgumentException('code must not be empty in authorization_code flow');
@@ -306,6 +314,10 @@ class Cidaas {
                 'grant_type' => 'authorization_code',
                 'code' => $code,
             ];
+
+            if ($pkceEnabled) {
+               $params["code_verifier"] = $_SESSION['code_verifier'];
+            }
         } else if ($grantType === GrantType::RefreshToken) {
             if (empty($refreshToken)) {
                 throw new \InvalidArgumentException('refreshToken must not be empty in refresh_token flow');
