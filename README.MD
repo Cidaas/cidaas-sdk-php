@@ -69,7 +69,7 @@ In addition to these required parameters, there are two optional constructor par
 During construction, an http call is being performed to read base configuration data from the server.
 
 ### Integration of hosted login page
-In order to integrate a hosted login page, you might just implement a simple button, which itself calls the login method when clicked.
+In order to integrate a hosted login page, you might just implement a simple button, which itself calls the login method when clicked. By default pkce flow is disabled, to enable the pkce flow you must enable the flag $pkceEnabled by providing the value **true** in the function parameter.
 ```php
 <?php
     $provider->loginWithBrowser();
