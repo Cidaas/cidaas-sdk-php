@@ -1,3 +1,10 @@
+## [1.3.2](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.1...v1.3.2) (2024-01-16)
+
+
+### Bug Fixes
+
+* add default value to func param pkceEnabled ([942c695](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/942c6951be811e0bb29c0992c82d446d2170c87c))
+
 ## [1.3.1](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.0...v1.3.1) (2024-01-03)
 
 
