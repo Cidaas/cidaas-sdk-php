@@ -208,7 +208,7 @@ class Cidaas {
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      * @throws LogicException if no loginUrl has been set
      */
-    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array(), bool $pkceEnabled) {
+    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array(), bool $pkceEnabled = false) {
         $client = $this->createClient();
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
@@ -219,7 +219,9 @@ class Cidaas {
         $loginUrl .= '&view_type=' . "login";
 
         if ($pkceEnabled) {
+            session_start();
             $code_verifier = bin2hex(random_bytes(64));
+            $_SESSION['code-verifier'] = $code_verifier;
             $str = strtr(base64_encode(hash('sha256', $code_verifier, true)), '+/', '-_');
             $code_challenge = rtrim($str, '=');
             $loginUrl .= '&code_challenge=' . $code_challenge . '&code_challenge_method=S256';
@@ -301,7 +303,7 @@ class Cidaas {
      * @param string $refreshToken only required for {@see GrantType::$RefreshToken}
      * @return PromiseInterface promise with access token or error
      */
-    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = '', bool $pkceEnabled): PromiseInterface {
+    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = '', bool $pkceEnabled = false): PromiseInterface {
         if ($grantType === GrantType::AuthorizationCode) {
             if (empty($code)) {
                 throw new \InvalidArgumentException('code must not be empty in authorization_code flow');
@@ -316,7 +318,7 @@ class Cidaas {
             ];
 
             if ($pkceEnabled) {
-               $params["code_verifier"] = $_SESSION['code_verifier'];
+               $params["code_verifier"] = $_SESSION['code-verifier'];
             }
         } else if ($grantType === GrantType::RefreshToken) {
             if (empty($refreshToken)) {
