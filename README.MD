@@ -58,7 +58,7 @@ All communication is done using the php class `Cidaas\OAuth2\Client\Provider\Cid
 able to use this provider, you need to instantiate it with the prerequisites data mentioned above.
 ```php
 <?php
-$cidaas = new Cidaas('https://yourcidaasinstance.cidaas.de', 'client id', 'client secret', 'https://yourwebsite/redirectAfterLogin');
+$provider = new Cidaas('https://yourcidaasinstance.cidaas.de', 'client id', 'client secret', 'https://yourwebsite/redirectAfterLogin');
 ?>
 ```
 
@@ -471,7 +471,7 @@ email
 mobile_number
 username
 sub
-```;
+```
 
 ```php
 <?php
@@ -518,6 +518,78 @@ To verify passwordless login after initiating the process use the function verif
         $resp1 = $provider->initiatePasswordlessLogin($requestId, "email", 'account@cidaas.de', '1234567')->wait();
         $resp2 = $provider->verifyPasswordlessLogin("email",$resp1->exchange_id, '123456', $requestId)->wait();
     })
+?>
+```
+
+### Get user profile
+
+To get user profile use the function getUserProfile. The function accepts below params
+
+| field | type | description |
+|------ | ---- | ----------- |
+| accessToken | string | The access token to authenticate the api. To get the accessToken you can use the function getAccessToken |
+| sub | string | sub is an optional parameter. If not provided the function returns the user details of sub in the access token. You can additionaly provide a sub to get the details of an specific sub |
+
+
+```php
+<?php
+    $resp1 = $provider->getUserProfile($accessToken, $sub)->wait();
+?>
+```
+
+### Initiate reset password
+
+To start a password reset process use the function initiateResetPassword. The function accepts the below params. The function returns a resetRequestId($rprq) which is required to validate the code(otp) sent to the email provided and later the same resetRequestId must be provided to complete the reset password process.
+
+| field | type | description |
+|------ | ---- | ----------- |
+| email | string | The email of the user account for which the password needs to be reset |
+| requestId | string | In order to access the register method, you need to retrieve a requestId first |
+
+
+```php
+<?php
+   $provider->getRequestId('openid identities profile offline_access')->then(function ($requestId) {
+        $res = $provider->initiateResetPassword($email, $requestId)->wait();
+    })
+?>
+```
+
+### Validate reset password code
+
+To validate the code use the function handleResetPassword. The code will be sent to the email of the user when the password reset process is initiated. In cidaas version v2 the function returns a json response with the exchange_id which must be used to complete the password reset process. In version v3 upon validated successfully the user will be redirected to the password reset page where user needs to provide a new password and confirm the same. The function accepts below params
+
+| field | type | description |
+|------ | ---- | ----------- |
+| code | string | The code(otp) received in mail when initiateResetPassword called |
+| resetRequestId | string | resetRequestId($rprq) recieved in the response when the password reset process is initiated |
+| version | string | cidaas version. Currently v2 and v3 version are supported. This is an optional parameter. If not provided the default version v2 is considered to process the request further |
+
+
+```php
+<?php
+    // based on the version the response differs. v2 version returns a promise while v3 redirects to location in the response
+    $resp = $provider->handleResetPassword($code, $resetRequestId)->wait();
+?>
+```
+
+### Reset Password
+
+To complete the password reset process use the function resetPassword. In cidaas version v2 the function returns a json response with success tru or false. In version v3 the user will be redirected to a success or error page. The function accepts below params
+
+| field | type | description |
+|------ | ---- | ----------- |
+| password | string | The new password |
+| confirmPassword | string | confirm the new password |
+| exchangeId | string | exchangeId recieved in the response of handleResetPassword function |
+| resetRequestId | string | resetRequestId($rprq) recieved in the response when the password reset process is initiated |
+| version | string | cidaas version. Currently v2 and v3 version are supported. This is an optional parameter. If not provided the default version v2 is considered to process the request further |
+
+
+```php
+<?php
+    // based on the version the response differs. v2 version returns a promise while v3 redirects to location in the response
+    $resp = $provider->resetPassword($password, $confirmPassword, $exchangeId, $resetRequestId)->wait();
 ?>
 ```
 
