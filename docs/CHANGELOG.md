@@ -1,3 +1,11 @@
+## [1.3.3](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.2...v1.3.3) (2024-02-07)
+
+
+### Bug Fixes
+
+* cidaas v3 password reset flow support ([e11b874](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/e11b8742e803c18a5dd7401c23ebf6eaceee76d2))
+* update endpoint for cidaas v3 ([d2311fa](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/d2311fa48584e61773b5bd29901bb1085fab7e66))
+
 ## [1.3.2](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.1...v1.3.2) (2024-01-16)
 
 
