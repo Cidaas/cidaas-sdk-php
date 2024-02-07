@@ -14,7 +14,8 @@ use UnexpectedValueException;
  * Cidaas connector.
  * @package Cidaas\OAuth2\Client\Provider
  */
-class Cidaas {
+class Cidaas
+{
     private static string $well_known_uri = "/.well-known/openid-configuration";
     private static string $requestIdUri = '/authz-srv/authrequest/authz/generate';
     private static string $getRegistrationSetupUri = '/registration-setup-srv/public/list';
@@ -46,7 +47,8 @@ class Cidaas {
      * @param HandlerStack|null $handler (optional) for http requests
      * @param bool $debug (optional) to enable debugging
      */
-    public function __construct(string $baseUrl, string $clientId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false) {
+    public function __construct(string $baseUrl, string $clientId, string $clientSecret, string $redirectUri, HandlerStack $handler = null, bool $debug = false)
+    {
         $this->validate($baseUrl, 'Base URL');
         $this->validate($clientId, 'Client-ID');
         $this->validate($clientSecret, 'Client-Secret');
@@ -60,7 +62,6 @@ class Cidaas {
             $this->handler = $handler;
         }
         $this->debug = $debug;
-
     }
 
     /**
@@ -70,8 +71,7 @@ class Cidaas {
      */
     private function initClient()
     {
-        if($this->init)
-        {
+        if ($this->init) {
             return;
         }
         $this->openid_config = $this->loadOpenIdConfig();
@@ -86,7 +86,8 @@ class Cidaas {
      * @param string $acceptLanguage for the language. defaults to "en-GB"
      * @return PromiseInterface promise with the requestId or error
      */
-    public function getRequestId(string $scope = 'openid', string $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface {
+    public function getRequestId(string $scope = 'openid', string $responseType = 'code', string $acceptLanguage = 'en-GB'): PromiseInterface
+    {
         $client = $this->createClient();
 
         $params = [
@@ -120,7 +121,8 @@ class Cidaas {
      * @param string $locale for registration data
      * @return PromiseInterface promise with registration data or error
      */
-    public function getRegistrationSetup(string $requestId, string $locale): PromiseInterface {
+    public function getRegistrationSetup(string $requestId, string $locale): PromiseInterface
+    {
         $client = $this->createClient();
 
         $url = $this->baseUrl . self::$getRegistrationSetupUri;
@@ -146,7 +148,8 @@ class Cidaas {
      * @param string $acceptLanguage for the language. defaults to "en-GB"
      * @return PromiseInterface promise with user data or error
      */
-    public function register(array $registrationFields, string $requestId, string $acceptLanguage = 'en-GB'): PromiseInterface {
+    public function register(array $registrationFields, string $requestId, string $acceptLanguage = 'en-GB'): PromiseInterface
+    {
         $client = $this->createClient();
 
         $url = $this->baseUrl . self::$registerSdkUri;
@@ -178,7 +181,8 @@ class Cidaas {
      * @param string $requestId for login request
      * @return PromiseInterface promise with code or error
      */
-    public function loginWithCredentials(string $username, string $username_type, string $password, string $requestId): PromiseInterface {
+    public function loginWithCredentials(string $username, string $username_type, string $password, string $requestId): PromiseInterface
+    {
         $client = $this->createClient();
         $url = $this->baseUrl . self::$loginSdkUri;
         $params = [
@@ -208,7 +212,8 @@ class Cidaas {
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      * @throws LogicException if no loginUrl has been set
      */
-    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array(), bool $pkceEnabled = false) {
+    public function loginWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array(), bool $pkceEnabled = false)
+    {
         $client = $this->createClient();
         $loginUrl = $this->openid_config['authorization_endpoint'];
         $loginUrl .= '?client_id=' . $this->clientId;
@@ -237,7 +242,8 @@ class Cidaas {
      * @param string $scope for registration
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      */
-    public function registerWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array()) {
+    public function registerWithBrowser(string $scope = 'openid profile offline_access', array $queryParameters = array())
+    {
         $this->initClient();
         $registerUrl = $this->openid_config['authorization_endpoint'];
         $registerUrl .= '?client_id=' . $this->clientId;
@@ -256,7 +262,8 @@ class Cidaas {
      * Returns all query parameters from get request. The result should contain 'code' to be used for retrieving access token.
      * @return array with $_GET
      */
-    public function loginCallback(): array {
+    public function loginCallback(): array
+    {
         return $_GET;
     }
 
@@ -270,7 +277,8 @@ class Cidaas {
      * @param string $accessToken for access to password change api
      * @return PromiseInterface with promise containing success or error message
      */
-    public function changePassword(string $oldPassword, string $newPassword, string $confirmPassword, string $identityId, string $accessToken) {
+    public function changePassword(string $oldPassword, string $newPassword, string $confirmPassword, string $identityId, string $accessToken)
+    {
         $client = $this->createClient();
 
         $params = [
@@ -303,7 +311,8 @@ class Cidaas {
      * @param string $refreshToken only required for {@see GrantType::$RefreshToken}
      * @return PromiseInterface promise with access token or error
      */
-    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = '', bool $pkceEnabled = false): PromiseInterface {
+    public function getAccessToken(string $grantType, string $code = '', string $refreshToken = '', bool $pkceEnabled = false): PromiseInterface
+    {
         if ($grantType === GrantType::AuthorizationCode) {
             if (empty($code)) {
                 throw new \InvalidArgumentException('code must not be empty in authorization_code flow');
@@ -318,7 +327,7 @@ class Cidaas {
             ];
 
             if ($pkceEnabled) {
-               $params["code_verifier"] = $_SESSION['code-verifier'];
+                $params["code_verifier"] = $_SESSION['code-verifier'];
             }
         } else if ($grantType === GrantType::RefreshToken) {
             if (empty($refreshToken)) {
@@ -355,7 +364,8 @@ class Cidaas {
      * @param string $sub (optional) for user profile to retrieve
      * @return PromiseInterface promise with user profile or error
      */
-    public function getUserProfile(string $accessToken, string $sub = ""): PromiseInterface {
+    public function getUserProfile(string $accessToken, string $sub = ""): PromiseInterface
+    {
         $client = $this->createClient();
         $url = $this->openid_config["userinfo_endpoint"];
         if (!empty($sub)) {
@@ -380,7 +390,8 @@ class Cidaas {
      * @param string $requestId for api access
      * @return PromiseInterface promise with resetRequestId or error
      */
-    public function initiateResetPassword(string $email, string $requestId): PromiseInterface {
+    public function initiateResetPassword(string $email, string $requestId): PromiseInterface
+    {
         // TODO andere Medien statt email?
         $client = $this->createClient();
 
@@ -412,7 +423,13 @@ class Cidaas {
      * @param string $resetRequestId retrieved from {@see self::initiateResetPassword()}
      * @return PromiseInterface promise with exchangeId and resetRequestId or error
      */
-    public function handleResetPassword(string $code, string $resetRequestId): PromiseInterface {
+    public function handleResetPassword(string $code, string $resetRequestId, $version = "v2"): PromiseInterface
+    {
+        $url = $this->baseUrl . self::$handleResetPasswordUri;
+        if ($version == "v3") {
+            $url = $this->baseUrl . "/password-srv/resetpassword?action=validatecode";
+        }
+
         $client = $this->createClient();
 
         $params = [
@@ -426,7 +443,6 @@ class Cidaas {
                 'Content-Type' => 'application/json'
             ]
         ];
-        $url = $this->baseUrl . self::$handleResetPasswordUri;
 
         $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
@@ -443,9 +459,13 @@ class Cidaas {
      * @param string $resetRequestId from {@see self::handleResetPassword()}
      * @return PromiseInterface promise with success or error message
      */
-    public function resetPassword(string $password, string $confirmPassword, string $exchangeId, string $resetRequestId): PromiseInterface {
+    public function resetPassword(string $password, string $confirmPassword, string $exchangeId, string $resetRequestId, $version = "v2"): PromiseInterface
+    {
+        $url = $this->baseUrl . self::$resetPasswordUri;
+        if ($version == "v3") {
+            $url = $this->baseUrl . "/password-srv/resetpassword?action=acceptreset";
+        }
         $client = $this->createClient();
-
         $params = [
             'password' => $password,
             'confirmPassword' => $confirmPassword,
@@ -459,8 +479,6 @@ class Cidaas {
                 'Content-Type' => 'application/json'
             ]
         ];
-        $url = $this->baseUrl . self::$resetPasswordUri;
-
         $responsePromise = $client->requestAsync('POST', $url, $options);
         return $responsePromise->then(function (ResponseInterface $response) {
             $body = $response->getBody();
@@ -476,7 +494,8 @@ class Cidaas {
      * @param string $provider of identity profile
      * @return PromiseInterface promise with success or error message
      */
-    public function updateProfile(string $sub, array $fields, string $accessToken, string $provider = 'self'): PromiseInterface {
+    public function updateProfile(string $sub, array $fields, string $accessToken, string $provider = 'self'): PromiseInterface
+    {
         $client = $this->createClient();
 
         $fields['provider'] = $provider;
@@ -503,7 +522,8 @@ class Cidaas {
      * @param string $accessTokenForApiAccess to access api
      * @return PromiseInterface with success or error message
      */
-    public function validateAccessToken(string $accessTokenToValidate, $accessTokenForApiAccess = ""): PromiseInterface {
+    public function validateAccessToken(string $accessTokenToValidate, $accessTokenForApiAccess = ""): PromiseInterface
+    {
         $client = $this->createClient();
 
         $params = [
@@ -536,7 +556,8 @@ class Cidaas {
      * @param string $postLogoutUri (optional) to redirect to after logout
      * @return PromiseInterface promise with success (redirect) or error message
      */
-    public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface {
+    public function logout(string $accessToken, string $postLogoutUri = ""): PromiseInterface
+    {
         $client = $this->createClient();
         $url = $this->openid_config["end_session_endpoint"] . "?access_token_hint=" . $accessToken;
         if (!empty($postLogoutUri)) {
@@ -552,35 +573,38 @@ class Cidaas {
      * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      */
-    public function loginWithSocial(string $provider_name, string $request_id, array $queryParameters = array()) {
-        $url = $this->baseUrl. "/login-srv/social/login/". strtolower($provider_name) . "/" . $request_id;
+    public function loginWithSocial(string $provider_name, string $request_id, array $queryParameters = array())
+    {
+        $url = $this->baseUrl . "/login-srv/social/login/" . strtolower($provider_name) . "/" . $request_id;
         foreach ($queryParameters as $key => $value) {
             $registerUrl .= '&' . $key . '=' . $value;
         }
         header('Location: ' . $url);
     }
 
-     /**
+    /**
      * Performs a redirect to the register page of the social provider
      * @param string $provider_name name of the social provider. e.g: google
      * @param string $request_id the request_id of the oidc session. once can generate a request_id by calling the function getRequestId
      * @param array $queryParameters (optional) optionally adds more query parameters to the url.
      */
-    public function registerWithSocial($provider_name, $request_id, array $queryParameters = array()) {
-        $url = $this->baseUrl. "/login-srv/social/register/". strtolower($provider_name) . "/" . $request_id;
+    public function registerWithSocial($provider_name, $request_id, array $queryParameters = array())
+    {
+        $url = $this->baseUrl . "/login-srv/social/register/" . strtolower($provider_name) . "/" . $request_id;
         foreach ($queryParameters as $key => $value) {
             $registerUrl .= '&' . $key . '=' . $value;
         }
         header('Location: ' . $url);
     }
 
-     /**
+    /**
      * Initiates multi factore authentication
      * @param string $type the type of multi factor. e.g: email, sms
      * @param array $params an associate array with the params that api accepts as request body
      */
-    public function intiateMFA($type, $params) {
-        $url = $this->baseUrl."/verification-srv/v2/authenticate/initiate/". strtolower($type);
+    public function intiateMFA($type, $params)
+    {
+        $url = $this->baseUrl . "/verification-srv/v2/authenticate/initiate/" . strtolower($type);
         return $this->makeRequest($params, $url);
     }
 
@@ -591,8 +615,9 @@ class Cidaas {
      * @param string $pass_code the verification code recieved to the prefered mfa type
      * @param string $type the type of multi factor. e.g: email, sms
      */
-    public function authenticateMFA(string $exchange_id, string $sub, string $pass_code, string $type) {
-        $url = $this->baseUrl . "/verification-srv/v2/authenticate/authenticate/". strtolower($type);
+    public function authenticateMFA(string $exchange_id, string $sub, string $pass_code, string $type)
+    {
+        $url = $this->baseUrl . "/verification-srv/v2/authenticate/authenticate/" . strtolower($type);
         $allowed_types = ["EMAIL", "SMS"];
         if (!in_array(strtoupper($type), $allowed_types)) {
             throw new \InvalidArgumentException('invalid mfa type');
@@ -603,15 +628,19 @@ class Cidaas {
             'type' => strtoupper($type),
             'pass_code' => $pass_code
         ];
-       return $this->makeRequest($params, $url);
+        return $this->makeRequest($params, $url);
     }
 
     /**
      * Initiates account verification
      * @param array $params an associate array with the params that api accepts as request body
-    */
-    public function initiateAccountVerification($params) {
+     */
+    public function initiateAccountVerification($params, $version = "v2")
+    {
         $url = $this->baseUrl . "/verification-srv/account/initiate";
+        if ($version == "v3") {
+            $url = $url . "/sdk";
+        }
         return $this->makeRequest($params, $url);
     }
 
@@ -619,8 +648,9 @@ class Cidaas {
      * Verify account
      * @param string $accvid accvid recieved when initiating the account verification
      * @param array $code code received to the users account to verify after registration
-    */
-    public function verifyAccount(string $accvid, string $code) {
+     */
+    public function verifyAccount(string $accvid, string $code)
+    {
         $url = $this->baseUrl . "/verification-srv/account/verify";
         $params = [
             'accvid' => $accvid,
@@ -635,8 +665,9 @@ class Cidaas {
      * @param string $trackId the track_id recieved of the oidc session
      * @param string $acceptLanguage the locale
      * @param array $params an associate array with the params that api accepts as request body
-    */
-    public function progressiveRegistration($requestId, $trackId, $params, $acceptLanguage = 'en-US') {
+     */
+    public function progressiveRegistration($requestId, $trackId, $params, $acceptLanguage = 'en-US')
+    {
         $url = $this->baseUrl . "/login-srv/progressive/update/user";
         $headers = [
             'Content-type' => 'application/json',
@@ -652,8 +683,9 @@ class Cidaas {
      * @param string $consent_id the id of the consent
      * @param string $consent_version_id the version of the consent
      * @param string $sub the sub
-    */
-    public function getConsentDetails($consent_id, $consent_version_id, $sub){
+     */
+    public function getConsentDetails($consent_id, $consent_version_id, $sub)
+    {
         $url = $this->baseUrl . "/consent-management-srv/v2/consent/usage/public/info";
         $params = [
             'consent_id' => $consent_id,
@@ -666,8 +698,9 @@ class Cidaas {
     /**
      * To accept a consent
      * @param array $params an associate array with the params that api accepts as request body
-    */
-    public function acceptConsent($params){
+     */
+    public function acceptConsent($params)
+    {
         $url = $this->baseUrl . "/consent-management-srv/v2/consent/usage/accept";
         return $this->makeRequest($params, $url);
     }
@@ -679,8 +712,9 @@ class Cidaas {
      * @param string $mobile_number (optional) the mobile number of the user
      * @param string $username (optional) the username of the user
      * @param string $sub (optional) the uniqe identified of the user
-    */
-    public function getMFAList(string $request_id, string $email = '', string $mobile_number = '', string $username = '', string $sub = '') {
+     */
+    public function getMFAList(string $request_id, string $email = '', string $mobile_number = '', string $username = '', string $sub = '')
+    {
         $url = $this->baseUrl . "/verification-srv/v2/setup/public/configured/list";
         $params = [
             'request_id' => $request_id,
@@ -698,13 +732,14 @@ class Cidaas {
      * @param string $email the email of the user
      * @param string $medium_id the medium id of the preferred type. E.g: for type totp the medium id is "TOTP"
      * @param string $type the preferred type of passwordless login. E.g: email, totp, push etc.
-    */
-    public function initiatePasswordlessLogin(string $request_id, string $type, string $email, string $medium_id) {
+     */
+    public function initiatePasswordlessLogin(string $request_id, string $type, string $email, string $medium_id)
+    {
         $allowed_types = ["email", "totp", "push", "backup_code", "password"];
         if (!in_array(strtoupper($type), $allowed_types)) {
             throw new \InvalidArgumentException('invalid type');
         }
-        $url = $this->baseUrl. "/verification-srv/v2/authenticate/initiate/". strtolower($type);
+        $url = $this->baseUrl . "/verification-srv/v2/authenticate/initiate/" . strtolower($type);
         $params = [
             'usage_type' => "PASSWORDLESS_AUTHENTICATION",
             'request_id' => $request_id,
@@ -721,13 +756,14 @@ class Cidaas {
      * @param string $pass_code the verification code to validate the login flow
      * @param string $exchange_id the exchage id receieved in the response payload when password login was initiated
      * @param string $type the preferred type of passwordless login. E.g: email, totp, push etc.
-    */
-    public function verifyPasswordlessLogin(string $type, string $exchange_id, string $pass_code, string $requestId) {
+     */
+    public function verifyPasswordlessLogin(string $type, string $exchange_id, string $pass_code, string $requestId)
+    {
         $allowed_types = ["email", "totp", "push", "backup_code", "password"];
         if (!in_array(strtoupper($type), $allowed_types)) {
             throw new \InvalidArgumentException('invalid type');
         }
-        $url = $this->baseUrl. "/verification-srv/v2/authenticate/authenticate/". strtolower($type);
+        $url = $this->baseUrl . "/verification-srv/v2/authenticate/authenticate/" . strtolower($type);
         $params = [
             'exchange_id' => $exchange_id,
             'pass_code' => $pass_code,
@@ -751,7 +787,8 @@ class Cidaas {
         return new Client(['debug' => $this->debug]);
     }
 
-    private function parseJson($content): array {
+    private function parseJson($content): array
+    {
         $content = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -761,13 +798,15 @@ class Cidaas {
         return $content;
     }
 
-    private function validate($param, $name) {
+    private function validate($param, $name)
+    {
         if (empty($param)) {
             throw new \InvalidArgumentException($name . ' is not specified');
         }
     }
 
-    private function loadOpenIdConfig(): array {
+    private function loadOpenIdConfig(): array
+    {
         $openid_configuration_url = $this->baseUrl . self::$well_known_uri;
         $client = $this->__createClient();
         return $client->getAsync($openid_configuration_url)->then(function (ResponseInterface $response) {
@@ -776,7 +815,8 @@ class Cidaas {
         })->wait();
     }
 
-    private function makeRequest($params, $url, $headers = ['Content-Type' => 'application/json']) {
+    private function makeRequest($params, $url, $headers = ['Content-Type' => 'application/json'])
+    {
         $client = $this->createClient();
         $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
         $options = [
