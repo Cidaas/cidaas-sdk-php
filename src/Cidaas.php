@@ -423,40 +423,32 @@ class Cidaas
      * @param string $resetRequestId retrieved from {@see self::initiateResetPassword()}
      * @return PromiseInterface promise with exchangeId and resetRequestId or error
      */
-    public function handleResetPassword(string $code, string $resetRequestId, $version = "v2")
+    public function handleResetPassword(string $code, string $resetRequestId, $version = "v2"): PromiseInterface
     {
         $url = $this->baseUrl . self::$handleResetPasswordUri;
-
-        if ($version != "v3") {
-            $client = $this->createClient();
-            $params = [
-                'code' => $code,
-                'resetRequestId' => $resetRequestId
-            ];
-            $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
-            $options = [
-                RequestOptions::BODY => $postBody,
-                RequestOptions::HEADERS => [
-                    'Content-Type' => 'application/json'
-                ]
-            ];
-            $responsePromise = $client->requestAsync('POST', $url, $options);
-            return $responsePromise->then(function (ResponseInterface $response) {
-                $body = $response->getBody();
-                return $this->parseJson($body);
-            });
-        } else {
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array(
-                'code' => $code,
-                'resetRequestId' => $resetRequestId,
-            )));
-            curl_exec($ch);
-            $redirectUri = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
-            header('Location: ' . $redirectUri);
-            curl_close($ch);
+        if ($version == "v3") {
+            $url = $this->baseUrl . "/password-srv/resetpassword?action=validatecode";
         }
+
+        $client = $this->createClient();
+
+        $params = [
+            'code' => $code,
+            'resetRequestId' => $resetRequestId
+        ];
+        $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
+        $options = [
+            RequestOptions::BODY => $postBody,
+            RequestOptions::HEADERS => [
+                'Content-Type' => 'application/json'
+            ]
+        ];
+
+        $responsePromise = $client->requestAsync('POST', $url, $options);
+        return $responsePromise->then(function (ResponseInterface $response) {
+            $body = $response->getBody();
+            return $this->parseJson($body);
+        });
     }
 
     /**
@@ -467,44 +459,31 @@ class Cidaas
      * @param string $resetRequestId from {@see self::handleResetPassword()}
      * @return PromiseInterface promise with success or error message
      */
-    public function resetPassword(string $password, string $confirmPassword, string $exchangeId, string $resetRequestId, $version = "v2")
+    public function resetPassword(string $password, string $confirmPassword, string $exchangeId, string $resetRequestId, $version = "v2"): PromiseInterface
     {
         $url = $this->baseUrl . self::$resetPasswordUri;
-        if ($version != "v3") {
-            $client = $this->createClient();
-
-            $params = [
-                'password' => $password,
-                'confirmPassword' => $confirmPassword,
-                'exchangeId' => $exchangeId,
-                'resetRequestId' => $resetRequestId
-            ];
-            $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
-            $options = [
-                RequestOptions::BODY => $postBody,
-                RequestOptions::HEADERS => [
-                    'Content-Type' => 'application/json'
-                ]
-            ];
-            $responsePromise = $client->requestAsync('POST', $url, $options);
-            return $responsePromise->then(function (ResponseInterface $response) {
-                $body = $response->getBody();
-                return $this->parseJson($body);
-            });
-        } else {
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array(
-                'password' => $password,
-                'confirmPassword' => $confirmPassword,
-                'exchangeId' => $exchangeId,
-                'resetRequestId' => $resetRequestId
-            )));
-            curl_exec($ch);
-            $redirectUri = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
-            header('Location: ' . $redirectUri);
-            curl_close($ch);
+        if ($version == "v3") {
+            $url = $this->baseUrl . "/password-srv/resetpassword?action=acceptreset";
         }
+        $client = $this->createClient();
+        $params = [
+            'password' => $password,
+            'confirmPassword' => $confirmPassword,
+            'exchangeId' => $exchangeId,
+            'resetRequestId' => $resetRequestId
+        ];
+        $postBody = json_encode($params, JSON_UNESCAPED_SLASHES);
+        $options = [
+            RequestOptions::BODY => $postBody,
+            RequestOptions::HEADERS => [
+                'Content-Type' => 'application/json'
+            ]
+        ];
+        $responsePromise = $client->requestAsync('POST', $url, $options);
+        return $responsePromise->then(function (ResponseInterface $response) {
+            $body = $response->getBody();
+            return $this->parseJson($body);
+        });
     }
 
     /**
@@ -656,9 +635,12 @@ class Cidaas
      * Initiates account verification
      * @param array $params an associate array with the params that api accepts as request body
      */
-    public function initiateAccountVerification($params)
+    public function initiateAccountVerification($params, $version = "v2")
     {
         $url = $this->baseUrl . "/verification-srv/account/initiate";
+        if ($version == "v3") {
+            $url = $url . "/sdk";
+        }
         return $this->makeRequest($params, $url);
     }
 

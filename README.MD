@@ -287,7 +287,7 @@ The api used in the function returns a response like shown below. After successf
 
 ### Initiate account verification
 
-To initiate account verification use the function initiateAccountVerification. Account verification is done for newly created user account is not verified. A sample of the function parameter $params is shown below
+To initiate account verification use the function initiateAccountVerification. Account verification is done for newly created user account is not verified. If you are on cidaas v3, you must set the value **v3** to the function parameter **$version**. The paramter **$version** is optional. Currently v2 and v3 version are supported. If not provided the default version v2 is considered to process the request further. A sample of the function parameter $params is shown below
 
 * Allowed values for verificationMedium
 
@@ -557,7 +557,7 @@ To start a password reset process use the function initiateResetPassword. The fu
 
 ### Validate reset password code
 
-To validate the code use the function handleResetPassword. The code will be sent to the email of the user when the password reset process is initiated. In cidaas version v2 the function returns a json response with the exchange_id which must be used to complete the password reset process. In version v3 upon validated successfully the user will be redirected to the password reset page where user needs to provide a new password and confirm the same. The function accepts below params
+To validate the code use the function handleResetPassword. The code will be sent to the email of the user when the password reset process is initiated. If you are on cidaas v3, you must set the value **v3** to the function parameter version
 
 | field | type | description |
 |------ | ---- | ----------- |
@@ -568,14 +568,13 @@ To validate the code use the function handleResetPassword. The code will be sent
 
 ```php
 <?php
-    // based on the version the response differs. v2 version returns a promise while v3 redirects to location in the response
     $resp = $provider->handleResetPassword($code, $resetRequestId)->wait();
 ?>
 ```
 
 ### Reset Password
 
-To complete the password reset process use the function resetPassword. In cidaas version v2 the function returns a json response with success tru or false. In version v3 the user will be redirected to a success or error page. The function accepts below params
+To complete the password reset process use the function resetPassword. In cidaas version v2 the function returns a json response with success tru or false. If you are on cidaas v3, you must set the value **v3** to the function parameter version
 
 | field | type | description |
 |------ | ---- | ----------- |
@@ -588,7 +587,6 @@ To complete the password reset process use the function resetPassword. In cidaas
 
 ```php
 <?php
-    // based on the version the response differs. v2 version returns a promise while v3 redirects to location in the response
     $resp = $provider->resetPassword($password, $confirmPassword, $exchangeId, $resetRequestId)->wait();
 ?>
 ```
