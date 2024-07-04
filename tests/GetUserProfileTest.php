@@ -23,7 +23,7 @@ final class GetUserProfileTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::loginSuccessfulResponse()), new Response(200, [], self::getAccessTokenSuccessfulResponse()));
 
         $this->responsePromise = $this->provider->getRequestId()->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
             return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
@@ -63,8 +63,8 @@ final class GetUserProfileTest extends AbstractCidaasTestParent {
             return $this->provider->getUserProfile($accessToken);
         })->wait();
         assertEquals(self::$SUB, $response['sub']);
-        assertEquals($_ENV['USERNAME'], $response['identities'][0]['email']);
-        assertEquals($_ENV['USERNAME'], $response['email']);
+        assertEquals($_ENV['USER_NAME'], $response['identities'][0]['email']);
+        assertEquals($_ENV['USER_NAME'], $response['email']);
     }
 
     public function test_getUserProfile_withAccessTokenAndInvalidSub_returnsUserProfileFromServer() {
@@ -74,8 +74,8 @@ final class GetUserProfileTest extends AbstractCidaasTestParent {
             return $this->provider->getUserProfile($accessToken, 'invalidsub');
         })->wait();
         assertEquals(self::$SUB, $response['sub']);
-        assertEquals($_ENV['USERNAME'], $response['identities'][0]['email']);
-        assertEquals($_ENV['USERNAME'], $response['email']);
+        assertEquals($_ENV['USER_NAME'], $response['identities'][0]['email']);
+        assertEquals($_ENV['USER_NAME'], $response['email']);
     }
 
     public function test_getUserProfile_withInvalidAccessToken_returnsErrorResult() {

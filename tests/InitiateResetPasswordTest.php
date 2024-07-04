@@ -30,13 +30,13 @@ final class InitiateResetPasswordTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::loginSuccessfulResponse()));
 
         $this->responsePromise->then(function ($requestId) {
-            return $this->provider->initiateResetPassword($_ENV['USERNAME'], $requestId);
+            return $this->provider->initiateResetPassword($_ENV['USER_NAME'], $requestId);
         })->wait();
 
         $request = $this->mock->getLastRequest();
         assertEquals('/users-srv/resetpassword/initiate', $request->getUri()->getPath());
         $body = json_decode($request->getBody(), true);
-        assertEquals($_ENV['USERNAME'], $body['email']);
+        assertEquals($_ENV['USER_NAME'], $body['email']);
         assertEquals('CODE', $body['processingType']);
         assertEquals('email', $body['resetMedium']);
         assertEquals(self::$REQUEST_ID, $body['requestId']);
@@ -46,7 +46,7 @@ final class InitiateResetPasswordTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::resetSuccessfulResponse()));
 
         $response = $this->responsePromise->then(function ($requestId) {
-            return $this->provider->initiateResetPassword($_ENV['USERNAME'], $requestId);
+            return $this->provider->initiateResetPassword($_ENV['USER_NAME'], $requestId);
         })->wait();
 
         assertTrue($response['success']);
@@ -72,7 +72,7 @@ final class InitiateResetPasswordTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(400, [], self::$invalidRequestIdResponse));
 
         $promise = $this->responsePromise->then(function ($requestId) {
-            return $this->provider->initiateResetPassword($_ENV['USERNAME'], 'aaa' . $requestId);
+            return $this->provider->initiateResetPassword($_ENV['USER_NAME'], 'aaa' . $requestId);
         });
 
         try {
