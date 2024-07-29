@@ -31,7 +31,7 @@ final class GetAccessTokenTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::loginSuccessfulResponse()));
 
         $this->responsePromise = $this->provider->getRequestId('openid offline_access')->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         });
     }
 

@@ -23,7 +23,7 @@ final class ValidateAccessTokenTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::loginSuccessfulResponse()), new Response(200, [], self::getAccessTokenSuccessfulResponse()));
 
         $this->accessTokenToValidate = $this->provider->getRequestId()->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
             return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
@@ -41,7 +41,7 @@ final class ValidateAccessTokenTest extends AbstractCidaasTestParent {
         );
 
         $this->provider->getRequestId()->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
             return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
@@ -87,7 +87,7 @@ final class ValidateAccessTokenTest extends AbstractCidaasTestParent {
         );
 
         $responsePromise = $this->provider->getRequestId()->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
             return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
@@ -109,7 +109,7 @@ final class ValidateAccessTokenTest extends AbstractCidaasTestParent {
         );
 
         $responsePromise = $this->provider->getRequestId()->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
             return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);
@@ -131,7 +131,7 @@ final class ValidateAccessTokenTest extends AbstractCidaasTestParent {
         );
 
         $responsePromise = $this->provider->getRequestId()->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->then(function ($credentialsResponse) {
             $code = $credentialsResponse['data']['code'];
             return $this->provider->getAccessToken(GrantType::AuthorizationCode, $code);

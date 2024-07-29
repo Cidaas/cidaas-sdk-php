@@ -30,13 +30,13 @@ final class LoginWithCredentialsTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::loginSuccessfulResponse()));
 
         $this->responsePromise->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         })->wait();
 
         $request = $this->mock->getLastRequest();
         $body = json_decode($request->getBody(), true);
 
-        assertEquals($_ENV['USERNAME'], $body['username']);
+        assertEquals($_ENV['USER_NAME'], $body['username']);
         assertEquals($_ENV['PASSWORD'], $body['password']);
         assertEquals($_ENV['USERNAME_TYPE'], $body['username_type']);
         assertEquals(self::$REQUEST_ID, $body['requestId']);
@@ -46,7 +46,7 @@ final class LoginWithCredentialsTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(200, [], self::loginSuccessfulResponse()));
 
         $promise = $this->responsePromise->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         });
 
         $response = $promise->wait();
@@ -59,7 +59,7 @@ final class LoginWithCredentialsTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(417, [], self::loginUnsuccessfulWithKnownUserResponse()));
 
         $promise = $this->responsePromise->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         });
 
         try {
@@ -80,7 +80,7 @@ final class LoginWithCredentialsTest extends AbstractCidaasTestParent {
         $this->mock->append(new Response(417, [], self::$loginUnsuccessfulWithUnkownUserResponse));
 
         $promise = $this->responsePromise->then(function ($requestId) {
-            return $this->provider->loginWithCredentials($_ENV['USERNAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
+            return $this->provider->loginWithCredentials($_ENV['USER_NAME'], $_ENV['USERNAME_TYPE'], $_ENV['PASSWORD'], $requestId);
         });
 
         try {
