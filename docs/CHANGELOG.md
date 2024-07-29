@@ -1,3 +1,11 @@
+## [1.3.4](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.3...v1.3.4) (2024-07-29)
+
+
+### Bug Fixes
+
+* [#143](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/issues/143) code coverage added ([bc9a1bd](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/bc9a1bda48aead913cdf1d00725bb9fb491eb143))
+* [#143](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/issues/143) Failing Badges on some Projects issue fixes ([7618bcd](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/commit/7618bcddd8a3eb7924cd61f045a9f52d830cf748))
+
 ## [1.3.3](https://gitlab.widas.de/cidaas-public-devkits/cidaas-public-sdks/cidaas-sdk-php/compare/v1.3.2...v1.3.3) (2024-02-07)
 
 
