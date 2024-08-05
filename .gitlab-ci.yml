@@ -20,8 +20,6 @@ codecoverage:
     - php composer.phar install
 
 create_codequality_badges:
-  before_script:
-    - echo "Setting up code quality badges"
   rules:
     - when: never
 
