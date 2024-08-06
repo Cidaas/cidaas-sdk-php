@@ -17,6 +17,7 @@ codecoverage:
     - pecl install xdebug
     - docker-php-ext-enable xdebug
     - export XDEBUG_MODE=debug
+    - printenv
     - curl -sS https://getcomposer.org/installer | php
     - php composer.phar install
 
