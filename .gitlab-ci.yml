@@ -22,7 +22,7 @@ codecoverage:
     - XDEBUG_MODE=coverage php vendor/bin/phpunit --coverage-text > coverage_report.txt
   coverage: '/total:\s+\(statements\)\s+(\d+(?:\.\d+)?%)/'
   artifacts:
-    path: coverage_report.txt
+    paths: [coverage_report.txt]
 
 
 create_codequality_badges:
