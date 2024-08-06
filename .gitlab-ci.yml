@@ -16,6 +16,7 @@ codecoverage:
     - apk add --no-cache tar=1.34-r3 git zip unzip $PHPIZE_DEPS linux-headers
     - pecl install xdebug
     - docker-php-ext-enable xdebug
+    - export XDEBUG_MODE=debug
     - curl -sS https://getcomposer.org/installer | php
     - php composer.phar install
 
