@@ -19,9 +19,10 @@ codecoverage:
     - curl -sS https://getcomposer.org/installer | php
     - php composer.phar install
   script:
-    - XDEBUG_MODE=coverage php vendor/bin/phpunit --coverage-text | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+    - XDEBUG_MODE=coverage php vendor/bin/phpunit --coverage-text > coverage_report.txt
+  coverage: '/total:\s+\(statements\)\s+(\d+(?:\.\d+)?%)/'
   artifacts:
-    paths: ['/${CI_PROJECT_DIR}/vendor/*']
+    paths: coverage_report.txt
 
 
 create_codequality_badges:
